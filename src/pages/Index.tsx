@@ -18,7 +18,7 @@ const Index = () => {
   const [healthData, setHealthData] = useState<AWSRegion[]>([]);
   const [recentItems, setRecentItems] = useState<RSSItem[]>([]);
   const [refreshInterval, setRefreshInterval] = useState(NORMAL_REFRESH_RATE);
-  const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
+  const [lastBuildDate, setLastBuildDate] = useState<string | null>(null);
 
   const checkForErrors = useCallback((data: AWSRegion[]) => {
     return data.some(region => region.status === 'issue' || region.status === 'outage');
@@ -27,17 +27,11 @@ const Index = () => {
   const updateHealth = useCallback(async () => {
     try {
       const data = await fetchAWSHealth();
-      console.log("Fetched data:", data); // Debug log
       if (data) {
         setHealthData(data.regions);
         setRecentItems(data.recentItems);
-        console.log("Recent items:", data.recentItems); // Debug log
-        // Get the most recent update time from the RSS feed
-        if (data.recentItems.length > 0) {
-          const newLastUpdateTime = new Date(data.recentItems[0].pubDate);
-          console.log("Setting last update time to:", newLastUpdateTime); // Debug log
-          setLastUpdateTime(newLastUpdateTime);
-        }
+        setLastBuildDate(data.lastBuildDate);
+        
         // Adjust refresh rate based on health status
         const hasErrors = checkForErrors(data.regions);
         setRefreshInterval(hasErrors ? ERROR_REFRESH_RATE : NORMAL_REFRESH_RATE);
@@ -55,16 +49,9 @@ const Index = () => {
 
   useEffect(() => {
     updateHealth();
-    
-    // Create an interval that will be updated when refreshInterval changes
     const interval = setInterval(updateHealth, refreshInterval);
-    
-    // Cleanup interval on unmount or when refreshInterval changes
     return () => clearInterval(interval);
   }, [refreshInterval, updateHealth]);
-
-  console.log("Current lastUpdateTime:", lastUpdateTime); // Debug log
-  console.log("Current recentItems:", recentItems); // Debug log
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -78,9 +65,6 @@ const Index = () => {
           </p>
           <div className="mt-1 text-sm text-gray-500 space-y-1">
             <p>Updates every {refreshInterval === NORMAL_REFRESH_RATE ? '15' : '5'} minutes</p>
-            {lastUpdateTime && (
-              <p>Last RSS feed update: {format(lastUpdateTime, "MMM d, yyyy HH:mm")}</p>
-            )}
           </div>
         </div>
         
@@ -92,7 +76,7 @@ const Index = () => {
 
         <div className="h-8" />
 
-        <StatusLog items={recentItems} />
+        <StatusLog items={recentItems} lastBuildDate={lastBuildDate} />
       </div>
     </div>
   );

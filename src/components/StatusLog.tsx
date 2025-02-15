@@ -8,18 +8,19 @@ interface StatusLogProps {
     description: string;
     pubDate: string;
   }[];
+  lastBuildDate?: string | null;
 }
 
-const StatusLog = ({ items }: StatusLogProps) => {
-  const lastUpdate = items.length > 0 ? new Date(items[0].pubDate) : null;
+const StatusLog = ({ items, lastBuildDate }: StatusLogProps) => {
+  const feedUpdateTime = lastBuildDate ? new Date(lastBuildDate) : null;
 
   return (
     <Card className="p-6">
       <div className="mb-6">
         <h2 className="text-2xl font-semibold">Recent Status Updates</h2>
-        {lastUpdate && (
+        {feedUpdateTime && (
           <p className="text-sm text-gray-500 mt-1">
-            Last RSS Update: {format(lastUpdate, "MMM d, yyyy HH:mm:ss")}
+            Last RSS Update: {format(feedUpdateTime, "MMM d, yyyy HH:mm:ss")}
           </p>
         )}
       </div>

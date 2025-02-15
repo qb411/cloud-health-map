@@ -11,6 +11,12 @@ export type RSSItem = {
   guid: string;
 };
 
+export type AWSHealthData = {
+  regions: AWSRegion[];
+  recentItems: RSSItem[];
+  lastBuildDate: string | null;
+};
+
 const parseRegionFromTitle = (title: string): string | null => {
   const matches = title.match(/\b([a-z]{2}-[a-z]+-\d+)\b/);
   return matches ? matches[1] : null;
@@ -40,7 +46,7 @@ export const fetchAWSHealth = async () => {
       headers: {
         'Accept': 'application/rss+xml',
       },
-      cache: 'no-store' // Ensure we don't get cached responses
+      cache: 'no-store'
     });
     
     if (!response.ok) {
@@ -48,7 +54,7 @@ export const fetchAWSHealth = async () => {
     }
 
     const text = await response.text();
-    console.log("Received RSS feed response"); // Debug log
+    console.log("Received RSS feed response");
 
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(text, "text/xml");
@@ -60,20 +66,20 @@ export const fetchAWSHealth = async () => {
       throw new Error('Failed to parse RSS feed');
     }
 
+    // Get lastBuildDate from channel metadata
+    const lastBuildDate = xmlDoc.querySelector("lastBuildDate")?.textContent || null;
+    console.log("RSS feed lastBuildDate:", lastBuildDate);
+
     const items = Array.from(xmlDoc.querySelectorAll("item"));
-    console.log(`Found ${items.length} RSS items`); // Debug log
+    console.log(`Found ${items.length} RSS items`);
 
     // Process RSS items for status updates
-    const rssItems: RSSItem[] = items.map(item => {
-      const pubDate = item.querySelector("pubDate")?.textContent || "";
-      console.log("Processing item with date:", pubDate); // Debug log
-      return {
-        title: item.querySelector("title")?.textContent || "",
-        description: item.querySelector("description")?.textContent || "",
-        pubDate: pubDate,
-        guid: item.querySelector("guid")?.textContent || "",
-      };
-    });
+    const rssItems: RSSItem[] = items.map(item => ({
+      title: item.querySelector("title")?.textContent || "",
+      description: item.querySelector("description")?.textContent || "",
+      pubDate: item.querySelector("pubDate")?.textContent || "",
+      guid: item.querySelector("guid")?.textContent || "",
+    }));
 
     // Sort items by date (newest first)
     rssItems.sort((a, b) => {
@@ -107,19 +113,10 @@ export const fetchAWSHealth = async () => {
       .filter(item => new Date(item.pubDate) > sevenDaysAgo)
       .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
 
-    if (recentItems.length > 0) {
-      console.log("Most recent update:", {
-        title: recentItems[0].title,
-        date: recentItems[0].pubDate,
-        timestamp: new Date(recentItems[0].pubDate).getTime()
-      });
-    } else {
-      console.log("No recent items found");
-    }
-
     return {
       regions,
-      recentItems
+      recentItems,
+      lastBuildDate
     };
 
   } catch (error) {
