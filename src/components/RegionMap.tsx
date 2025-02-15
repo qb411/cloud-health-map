@@ -45,14 +45,16 @@ const RegionMap = () => {
         fillOpacity: 0.8
       }).addTo(map.current!);
 
-      // Add popup
+      // Add popup with tighter padding
       marker.bindPopup(`
-        <div class="p-2">
+        <div class="p-1">
           <h3 class="font-semibold">${region.name}</h3>
-          <p class="text-sm text-gray-500">${region.code}</p>
-          <p class="text-sm font-medium text-emerald-600">Operational</p>
+          <p class="text-sm text-gray-500 -mt-0.5">${region.code}</p>
+          <p class="text-sm font-medium text-emerald-600 -mt-0.5">Operational</p>
         </div>
-      `);
+      `, {
+        className: 'compact-popup'
+      });
 
       // Add hover effect
       marker.on('mouseover', function() {
