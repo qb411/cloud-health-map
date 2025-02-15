@@ -1,7 +1,8 @@
+
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { awsRegions } from "@/lib/aws-regions";
+import { type AWSRegion } from "@/lib/aws-regions";
 import { Card } from "@/components/ui/card";
 
 // Helper function to get country flag emoji
@@ -75,9 +76,14 @@ const getStatusTextColor = (status: "operational" | "issue" | "outage") => {
   }
 };
 
-const RegionMap = () => {
+interface RegionMapProps {
+  regions: AWSRegion[];
+}
+
+const RegionMap = ({ regions }: RegionMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.CircleMarker[]>([]);
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -104,8 +110,35 @@ const RegionMap = () => {
       )
     }).addTo(map.current);
 
-    // Add markers for each AWS region
-    awsRegions.forEach((region) => {
+    // Add CSS to style the popup globally
+    const style = document.createElement('style');
+    style.textContent = `
+      .leaflet-popup-content-wrapper {
+        background: #FFE5D4 !important;
+        border-radius: 8px;
+      }
+      .leaflet-popup-tip {
+        background: #FFE5D4 !important;
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      map.current?.remove();
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  // Update markers when regions data changes
+  useEffect(() => {
+    if (!map.current) return;
+
+    // Remove existing markers
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current = [];
+
+    // Add new markers for each AWS region
+    regions.forEach((region) => {
       const colors = getStatusColor(region.status);
       const marker = L.circleMarker([region.location[1], region.location[0]], {
         radius: 8,
@@ -143,26 +176,10 @@ const RegionMap = () => {
           radius: 8
         });
       });
+
+      markersRef.current.push(marker);
     });
-
-    // Add CSS to style the popup globally
-    const style = document.createElement('style');
-    style.textContent = `
-      .leaflet-popup-content-wrapper {
-        background: #FFE5D4 !important;
-        border-radius: 8px;
-      }
-      .leaflet-popup-tip {
-        background: #FFE5D4 !important;
-      }
-    `;
-    document.head.appendChild(style);
-
-    return () => {
-      map.current?.remove();
-      document.head.removeChild(style);
-    };
-  }, []);
+  }, [regions]);
 
   return (
     <Card className="relative w-full h-[600px] overflow-hidden rounded-lg shadow-lg">

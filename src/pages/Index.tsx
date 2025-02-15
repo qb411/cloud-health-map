@@ -68,7 +68,7 @@ const Index = () => {
         
         <div className="h-4" />
         
-        <RegionMap />
+        <RegionMap regions={healthData} />
       </div>
     </div>
   );
