@@ -47,10 +47,10 @@ const RegionMap = () => {
 
       // Add popup with tighter padding
       marker.bindPopup(`
-        <div class="p-1">
+        <div class="pt-1 px-1 pb-0.5">
           <h3 class="font-semibold">${region.name}</h3>
           <p class="text-sm text-gray-500 -mt-0.5">${region.code}</p>
-          <p class="text-sm font-medium text-emerald-600 -mt-0.5">Operational</p>
+          <p class="text-sm font-medium text-emerald-600 -mt-0.5 mb-0">${region.status || 'Operational'}</p>
         </div>
       `, {
         className: 'compact-popup'
