@@ -5,6 +5,7 @@ import RegionSummary from "@/components/RegionSummary";
 import StatusLog from "@/components/StatusLog";
 import { fetchAWSHealth } from "@/lib/aws-health";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 import type { AWSRegion } from "@/lib/aws-regions";
 import type { RSSItem } from "@/lib/aws-health";
 
@@ -17,6 +18,7 @@ const Index = () => {
   const [healthData, setHealthData] = useState<AWSRegion[]>([]);
   const [recentItems, setRecentItems] = useState<RSSItem[]>([]);
   const [refreshInterval, setRefreshInterval] = useState(NORMAL_REFRESH_RATE);
+  const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
 
   const checkForErrors = useCallback((data: AWSRegion[]) => {
     return data.some(region => region.status === 'issue' || region.status === 'outage');
@@ -28,6 +30,10 @@ const Index = () => {
       if (data) {
         setHealthData(data.regions);
         setRecentItems(data.recentItems);
+        // Get the most recent update time from the RSS feed
+        if (data.recentItems.length > 0) {
+          setLastUpdateTime(new Date(data.recentItems[0].pubDate));
+        }
         // Adjust refresh rate based on health status
         const hasErrors = checkForErrors(data.regions);
         setRefreshInterval(hasErrors ? ERROR_REFRESH_RATE : NORMAL_REFRESH_RATE);
@@ -63,9 +69,12 @@ const Index = () => {
           <p className="mt-2 text-lg text-gray-600">
             Real-time status of AWS services across regions
           </p>
-          <p className="mt-1 text-sm text-gray-500">
-            Updates every {refreshInterval === NORMAL_REFRESH_RATE ? '15' : '5'} minutes
-          </p>
+          <div className="mt-1 text-sm text-gray-500 space-y-1">
+            <p>Updates every {refreshInterval === NORMAL_REFRESH_RATE ? '15' : '5'} minutes</p>
+            {lastUpdateTime && (
+              <p>Last RSS feed update: {format(lastUpdateTime, "MMM d, yyyy HH:mm")}</p>
+            )}
+          </div>
         </div>
         
         <RegionSummary regions={healthData} />
