@@ -27,12 +27,16 @@ const Index = () => {
   const updateHealth = useCallback(async () => {
     try {
       const data = await fetchAWSHealth();
+      console.log("Fetched data:", data); // Debug log
       if (data) {
         setHealthData(data.regions);
         setRecentItems(data.recentItems);
+        console.log("Recent items:", data.recentItems); // Debug log
         // Get the most recent update time from the RSS feed
         if (data.recentItems.length > 0) {
-          setLastUpdateTime(new Date(data.recentItems[0].pubDate));
+          const newLastUpdateTime = new Date(data.recentItems[0].pubDate);
+          console.log("Setting last update time to:", newLastUpdateTime); // Debug log
+          setLastUpdateTime(newLastUpdateTime);
         }
         // Adjust refresh rate based on health status
         const hasErrors = checkForErrors(data.regions);
@@ -58,6 +62,9 @@ const Index = () => {
     // Cleanup interval on unmount or when refreshInterval changes
     return () => clearInterval(interval);
   }, [refreshInterval, updateHealth]);
+
+  console.log("Current lastUpdateTime:", lastUpdateTime); // Debug log
+  console.log("Current recentItems:", recentItems); // Debug log
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
