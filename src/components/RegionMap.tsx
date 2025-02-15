@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -96,9 +95,7 @@ const RegionMap = () => {
           <p class="text-sm font-medium text-emerald-600 mt-1.5 mb-0 leading-none">${region.status || 'Operational'}</p>
         </div>
       `, {
-        className: 'compact-popup',
-        // Apply custom CSS to style the entire popup
-        popupAnchor: [0, -10],
+        className: 'compact-popup'
       });
 
       // Add hover effect
