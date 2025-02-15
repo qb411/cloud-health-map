@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -43,8 +42,6 @@ const getCountryFlag = (regionName: string): string => {
     'US East (Ohio)': '🇺🇸',
     'US West (N. California)': '🇺🇸',
     'US West (Oregon)': '🇺🇸',
-    'AWS GovCloud (US-East)': '🇺🇸',
-    'AWS GovCloud (US-West)': '🇺🇸',
   };
 
   return countryMap[regionName] || '🏳️';
