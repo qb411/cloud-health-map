@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -22,7 +23,7 @@ const getCountryFlag = (regionName: string): string => {
     'Asia Pacific (Thailand)': '🇹🇭',
     'Asia Pacific (Malaysia)': '🇲🇾',
     'Canada (Central)': '🇨🇦',
-    'Canada (West)': '🇨🇦',
+    'Canada (Calgary)': '🇨🇦',
     'China (Beijing)': '🇨🇳',
     'China (Ningxia)': '🇨🇳',
     'Europe (Frankfurt)': '🇩🇪',

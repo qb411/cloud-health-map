@@ -1,4 +1,3 @@
-
 export type AWSRegion = {
   name: string;
   code: string;
@@ -86,15 +85,15 @@ export const awsRegions: AWSRegion[] = [
     status: "operational",
   },
   {
-    name: "Canada (Central)",
-    code: "ca-central-1",
-    location: [-73.5673, 45.5017],
+    name: "Canada (Calgary)",
+    code: "ca-west-1",
+    location: [-114.0719, 51.0447],
     status: "operational",
   },
   {
-    name: "Canada (West)",
-    code: "ca-west-1",
-    location: [-114.0719, 51.0447],
+    name: "Canada (Central)",
+    code: "ca-central-1",
+    location: [-73.5673, 45.5017],
     status: "operational",
   },
   {
