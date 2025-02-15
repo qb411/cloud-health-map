@@ -1,20 +1,22 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { awsRegions } from "@/lib/aws-regions";
 import { Card } from "@/components/ui/card";
-
-const MAPBOX_TOKEN = ""; // You'll need to provide your Mapbox token
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const RegionMap = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const [mapboxToken, setMapboxToken] = useState("");
+  const [isMapInitialized, setIsMapInitialized] = useState(false);
 
-  useEffect(() => {
-    if (!mapContainer.current) return;
+  const initializeMap = () => {
+    if (!mapContainer.current || !mapboxToken) return;
 
-    mapboxgl.accessToken = MAPBOX_TOKEN;
+    mapboxgl.accessToken = mapboxToken;
     
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
@@ -46,10 +48,46 @@ const RegionMap = () => {
       });
     });
 
+    setIsMapInitialized(true);
+  };
+
+  useEffect(() => {
     return () => {
       map.current?.remove();
     };
   }, []);
+
+  if (!isMapInitialized) {
+    return (
+      <Card className="p-6 space-y-4">
+        <h3 className="text-lg font-semibold">Initialize Map</h3>
+        <p className="text-sm text-gray-500">
+          Please enter your Mapbox access token to view the map. You can find your token in the{" "}
+          <a 
+            href="https://account.mapbox.com/access-tokens/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:underline"
+          >
+            Mapbox account dashboard
+          </a>
+          .
+        </p>
+        <div className="flex space-x-2">
+          <Input
+            type="text"
+            placeholder="Enter your Mapbox token"
+            value={mapboxToken}
+            onChange={(e) => setMapboxToken(e.target.value)}
+            className="flex-1"
+          />
+          <Button onClick={initializeMap} disabled={!mapboxToken}>
+            Initialize Map
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="relative w-full h-[600px] overflow-hidden rounded-lg shadow-lg">

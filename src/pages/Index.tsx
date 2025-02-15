@@ -4,15 +4,20 @@ import RegionMap from "@/components/RegionMap";
 import RegionSummary from "@/components/RegionSummary";
 import { fetchAWSHealth } from "@/lib/aws-health";
 import { useToast } from "@/hooks/use-toast";
+import type { AWSRegion } from "@/lib/aws-regions";
 
 const Index = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [healthData, setHealthData] = useState<AWSRegion[]>([]);
 
   useEffect(() => {
     const updateHealth = async () => {
       try {
-        await fetchAWSHealth();
+        const data = await fetchAWSHealth();
+        if (data) {
+          setHealthData(data);
+        }
         setLoading(false);
       } catch (error) {
         console.error("Failed to fetch health data:", error);
