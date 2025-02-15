@@ -4,6 +4,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { awsRegions } from "@/lib/aws-regions";
 import { Card } from "@/components/ui/card";
+import { Flag } from "lucide-react";
 
 const RegionMap = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -45,10 +46,13 @@ const RegionMap = () => {
         fillOpacity: 0.8
       }).addTo(map.current!);
 
-      // Add popup with tighter padding
+      // Create SVG flag icon
+      const flagSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-1 -mt-0.5"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>`;
+
+      // Add popup with tighter padding and flag icon
       marker.bindPopup(`
         <div class="pt-1 px-1 pb-0.5">
-          <h3 class="font-semibold leading-none">${region.name}</h3>
+          <h3 class="font-semibold leading-none">${flagSvg}${region.name}</h3>
           <p class="text-sm text-gray-500 -mt-1 leading-none">${region.code}</p>
           <p class="text-sm font-medium text-emerald-600 mt-1.5 mb-0 leading-none">${region.status || 'Operational'}</p>
         </div>
