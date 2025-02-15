@@ -57,20 +57,20 @@ const RegionMap = () => {
 
     // Initialize map with options to limit scroll/zoom
     map.current = L.map(mapContainer.current, {
-      minZoom: 1.5, // Prevent zooming out too far
-      maxZoom: 8,   // Prevent zooming in too far
+      minZoom: 1.5,
+      maxZoom: 8,
       maxBounds: L.latLngBounds(
-        L.latLng(-60, -180), // Southwest corner
-        L.latLng(75, 180)    // Northeast corner
+        L.latLng(-60, -180),
+        L.latLng(75, 180)
       ),
-      maxBoundsViscosity: 1.0, // Prevents dragging outside bounds
+      maxBoundsViscosity: 1.0,
     }).setView([20, 0], 2);
 
     // Add OpenStreetMap tiles
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '© OpenStreetMap contributors',
-      noWrap: true, // Prevents multiple worlds from showing
+      noWrap: true,
       bounds: L.latLngBounds(
         L.latLng(-60, -180),
         L.latLng(75, 180)
@@ -90,13 +90,15 @@ const RegionMap = () => {
 
       // Add popup with tighter padding and country flag
       marker.bindPopup(`
-        <div class="pt-1 px-1 pb-0.5" style="background-color: #FEC6A1;">
+        <div class="pt-1 px-1 pb-0.5">
           <h3 class="font-semibold leading-none">${getCountryFlag(region.name)} ${region.name}</h3>
           <p class="text-sm text-gray-500 -mt-1 leading-none">${region.code}</p>
           <p class="text-sm font-medium text-emerald-600 mt-1.5 mb-0 leading-none">${region.status || 'Operational'}</p>
         </div>
       `, {
-        className: 'compact-popup'
+        className: 'compact-popup',
+        // Apply custom CSS to style the entire popup
+        popupAnchor: [0, -10],
       });
 
       // Add hover effect
@@ -115,8 +117,22 @@ const RegionMap = () => {
       });
     });
 
+    // Add CSS to style the popup globally
+    const style = document.createElement('style');
+    style.textContent = `
+      .leaflet-popup-content-wrapper {
+        background: #FFE5D4 !important;
+        border-radius: 8px;
+      }
+      .leaflet-popup-tip {
+        background: #FFE5D4 !important;
+      }
+    `;
+    document.head.appendChild(style);
+
     return () => {
       map.current?.remove();
+      document.head.removeChild(style);
     };
   }, []);
 
