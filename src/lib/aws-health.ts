@@ -1,13 +1,12 @@
 
 import { toast } from "@/hooks/use-toast";
-import { awsRegions } from "./aws-regions";
-import type { HealthStatus } from "./aws-regions";
+import { awsRegions, type AWSRegion } from "./aws-regions";
 
 export const fetchAWSHealth = async () => {
   try {
     // This is mock data until we implement proper AWS Health API integration
     // In production, this should be replaced with actual AWS SDK calls
-    const mockData = awsRegions.map(region => ({
+    const mockData: AWSRegion[] = awsRegions.map(region => ({
       ...region,
       status: Math.random() > 0.9 
         ? "issue" 
