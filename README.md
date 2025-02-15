@@ -1,69 +1,73 @@
-# Welcome to your Lovable project
 
-## Project info
+# AWS Global Health Status Monitor
 
-**URL**: https://lovable.dev/projects/0e333410-a520-42ba-9652-1ca3f54a2687
+A real-time dashboard that visualizes the operational status of AWS regions worldwide. This project provides an interactive map interface to monitor AWS service health across different geographical locations.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- 🗺️ Interactive global map showing all AWS regions
+- 🚦 Real-time status monitoring of AWS services
+- 🎯 Region-specific status indicators
+- 🔄 Auto-refreshing data (updates every minute)
+- 🌍 Country flag indicators for each region
 
-**Use Lovable**
+## Tech Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0e333410-a520-42ba-9652-1ca3f54a2687) and start prompting.
+- React + TypeScript
+- Vite for build tooling
+- Tailwind CSS for styling
+- shadcn/ui for UI components
+- Leaflet.js for interactive maps
+- AWS Status RSS feed integration
 
-Changes made via Lovable will be committed automatically to this repo.
+## Getting Started
 
-**Use your preferred IDE**
+### Prerequisites
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Installation
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Clone the repository
+git clone <your-repo-url>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Navigate to project directory
+cd aws-health-monitor
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Usage
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The application will fetch AWS health status data automatically when launched. The map displays interactive markers for each AWS region:
 
-**Use GitHub Codespaces**
+- Green markers indicate operational status
+- Yellow markers indicate service issues
+- Red markers indicate outages
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Click on any marker to see detailed information about that region, including:
+- Region name with country flag
+- AWS region code
+- Current operational status
 
-## What technologies are used for this project?
+## Data Updates
 
-This project is built with .
+The dashboard automatically refreshes its data every 60 seconds to ensure you have the most current AWS health status information.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Contributing
 
-## How can I deploy this project?
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-Simply open [Lovable](https://lovable.dev/projects/0e333410-a520-42ba-9652-1ca3f54a2687) and click on Share -> Publish.
+## License
 
-## I want to use a custom domain - is that possible?
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+## Acknowledgments
+
+- Data provided by AWS Service Health Dashboard RSS Feed
+- Map data © OpenStreetMap contributors
