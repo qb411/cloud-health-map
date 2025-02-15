@@ -1,11 +1,52 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useEffect, useState } from "react";
+import RegionMap from "@/components/RegionMap";
+import RegionSummary from "@/components/RegionSummary";
+import { fetchAWSHealth } from "@/lib/aws-health";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const updateHealth = async () => {
+      try {
+        await fetchAWSHealth();
+        setLoading(false);
+      } catch (error) {
+        console.error("Failed to fetch health data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch AWS health status",
+          variant: "destructive",
+        });
+      }
+    };
+
+    updateHealth();
+    const interval = setInterval(updateHealth, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [toast]);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            AWS Global Health Status
+          </h1>
+          <p className="mt-2 text-lg text-gray-600">
+            Real-time status of AWS services across regions
+          </p>
+        </div>
+        
+        <RegionSummary />
+        
+        <div className="h-4" />
+        
+        <RegionMap />
       </div>
     </div>
   );
