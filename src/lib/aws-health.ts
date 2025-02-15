@@ -4,7 +4,7 @@ import { awsRegions, type AWSRegion } from "./aws-regions";
 
 const AWS_RSS_URL = 'https://status.aws.amazon.com/rss/all.rss';
 
-type RSSItem = {
+export type RSSItem = {
   title: string;
   description: string;
   pubDate: string;
@@ -51,14 +51,20 @@ export const fetchAWSHealth = async () => {
     const xmlDoc = parser.parseFromString(text, "text/xml");
     const items = Array.from(xmlDoc.querySelectorAll("item"));
 
-    // Process each RSS item
-    items.forEach(item => {
-      const title = item.querySelector("title")?.textContent || "";
-      const description = item.querySelector("description")?.textContent || "";
-      const regionCode = parseRegionFromTitle(title);
+    // Process RSS items for status updates
+    const rssItems: RSSItem[] = items.map(item => ({
+      title: item.querySelector("title")?.textContent || "",
+      description: item.querySelector("description")?.textContent || "",
+      pubDate: item.querySelector("pubDate")?.textContent || "",
+      guid: item.querySelector("guid")?.textContent || "",
+    }));
+
+    // Process each RSS item for region status
+    rssItems.forEach(item => {
+      const regionCode = parseRegionFromTitle(item.title);
       
       if (regionCode && regionStatus.has(regionCode)) {
-        const status = determineStatus(description);
+        const status = determineStatus(item.description);
         // Only update if the new status is more severe
         const currentStatus = regionStatus.get(regionCode);
         if (currentStatus === "operational" || 
@@ -69,10 +75,23 @@ export const fetchAWSHealth = async () => {
     });
 
     // Update region statuses
-    return awsRegions.map(region => ({
+    const regions = awsRegions.map(region => ({
       ...region,
       status: regionStatus.get(region.code) || "operational"
     }));
+
+    // Filter items from the last 7 days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const recentItems = rssItems
+      .filter(item => new Date(item.pubDate) > sevenDaysAgo)
+      .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+
+    return {
+      regions,
+      recentItems
+    };
 
   } catch (error) {
     console.error("Error fetching AWS health data:", error);

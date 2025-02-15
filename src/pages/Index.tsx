@@ -2,9 +2,11 @@
 import { useEffect, useState, useCallback } from "react";
 import RegionMap from "@/components/RegionMap";
 import RegionSummary from "@/components/RegionSummary";
+import StatusLog from "@/components/StatusLog";
 import { fetchAWSHealth } from "@/lib/aws-health";
 import { useToast } from "@/hooks/use-toast";
 import type { AWSRegion } from "@/lib/aws-regions";
+import type { RSSItem } from "@/lib/aws-health";
 
 const NORMAL_REFRESH_RATE = 15 * 60 * 1000; // 15 minutes in milliseconds
 const ERROR_REFRESH_RATE = 5 * 60 * 1000;   // 5 minutes in milliseconds
@@ -13,6 +15,7 @@ const Index = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [healthData, setHealthData] = useState<AWSRegion[]>([]);
+  const [recentItems, setRecentItems] = useState<RSSItem[]>([]);
   const [refreshInterval, setRefreshInterval] = useState(NORMAL_REFRESH_RATE);
 
   const checkForErrors = useCallback((data: AWSRegion[]) => {
@@ -23,9 +26,10 @@ const Index = () => {
     try {
       const data = await fetchAWSHealth();
       if (data) {
-        setHealthData(data);
+        setHealthData(data.regions);
+        setRecentItems(data.recentItems);
         // Adjust refresh rate based on health status
-        const hasErrors = checkForErrors(data);
+        const hasErrors = checkForErrors(data.regions);
         setRefreshInterval(hasErrors ? ERROR_REFRESH_RATE : NORMAL_REFRESH_RATE);
       }
       setLoading(false);
@@ -69,6 +73,10 @@ const Index = () => {
         <div className="h-4" />
         
         <RegionMap regions={healthData} />
+
+        <div className="h-8" />
+
+        <StatusLog items={recentItems} />
       </div>
     </div>
   );
