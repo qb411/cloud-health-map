@@ -12,13 +12,26 @@ const RegionMap = () => {
   useEffect(() => {
     if (!mapContainer.current) return;
 
-    // Initialize map
-    map.current = L.map(mapContainer.current).setView([20, 0], 2);
+    // Initialize map with options to limit scroll/zoom
+    map.current = L.map(mapContainer.current, {
+      minZoom: 1.5, // Prevent zooming out too far
+      maxZoom: 8,   // Prevent zooming in too far
+      maxBounds: L.latLngBounds(
+        L.latLng(-60, -180), // Southwest corner
+        L.latLng(75, 180)    // Northeast corner
+      ),
+      maxBoundsViscosity: 1.0, // Prevents dragging outside bounds
+    }).setView([20, 0], 2);
 
     // Add OpenStreetMap tiles
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '© OpenStreetMap contributors'
+      attribution: '© OpenStreetMap contributors',
+      noWrap: true, // Prevents multiple worlds from showing
+      bounds: L.latLngBounds(
+        L.latLng(-60, -180),
+        L.latLng(75, 180)
+      )
     }).addTo(map.current);
 
     // Add markers for each AWS region
