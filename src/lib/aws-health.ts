@@ -4,10 +4,6 @@ import { awsRegions, type AWSRegion } from "./aws-regions";
 
 const AWS_RSS_URL = 'https://status.aws.amazon.com/rss/all.rss';
 
-// Track when simulation started
-let simulationStartTime: number | null = null;
-const SIMULATION_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
-
 type RSSItem = {
   title: string;
   description: string;
@@ -72,35 +68,11 @@ export const fetchAWSHealth = async () => {
       }
     });
 
-    // Initialize simulation start time if not set
-    if (!simulationStartTime) {
-      simulationStartTime = Date.now();
-      console.log("Simulation started at:", new Date(simulationStartTime).toLocaleTimeString());
-    }
-
-    // Check if simulation should still be active
-    const currentTime = Date.now();
-    const simulationActive = simulationStartTime && (currentTime - simulationStartTime < SIMULATION_DURATION);
-
-    if (simulationActive) {
-      // Simulate an outage in us-east-1 (N. Virginia)
-      regionStatus.set("us-east-1", "outage");
-      
-      // Simulate an issue in us-west-2 (Oregon)
-      regionStatus.set("us-west-2", "issue");
-
-      // Calculate time remaining
-      const timeRemaining = Math.ceil((SIMULATION_DURATION - (currentTime - simulationStartTime)) / 1000);
-      console.log(`Simulation will reset in ${timeRemaining} seconds`);
-    } else if (simulationStartTime && !simulationActive) {
-      // Reset simulation if it just ended
-      simulationStartTime = null;
-      console.log("Simulation ended, regions reset to operational status");
-      toast({
-        title: "Simulation Reset",
-        description: "All AWS regions have been reset to operational status",
-      });
-    }
+    // Simulate an outage in us-east-1 (N. Virginia)
+    regionStatus.set("us-east-1", "outage");
+    
+    // Simulate an issue in us-west-2 (Oregon)
+    regionStatus.set("us-west-2", "issue");
 
     // Update region statuses
     return awsRegions.map(region => ({
