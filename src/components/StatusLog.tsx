@@ -19,7 +19,7 @@ const StatusLog = ({ items }: StatusLogProps) => {
         <h2 className="text-2xl font-semibold">Recent Status Updates</h2>
         {lastUpdate && (
           <p className="text-sm text-gray-500 mt-1">
-            Last update: {format(lastUpdate, "MMM d, yyyy HH:mm")}
+            Last RSS Update: {format(lastUpdate, "MMM d, yyyy HH:mm:ss")}
           </p>
         )}
       </div>

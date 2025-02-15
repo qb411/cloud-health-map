@@ -59,6 +59,11 @@ export const fetchAWSHealth = async () => {
       guid: item.querySelector("guid")?.textContent || "",
     }));
 
+    // Sort items by date (newest first)
+    rssItems.sort((a, b) => {
+      return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
+    });
+
     // Process each RSS item for region status
     rssItems.forEach(item => {
       const regionCode = parseRegionFromTitle(item.title);
@@ -87,6 +92,8 @@ export const fetchAWSHealth = async () => {
     const recentItems = rssItems
       .filter(item => new Date(item.pubDate) > sevenDaysAgo)
       .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+
+    console.log("Latest RSS update time:", recentItems[0]?.pubDate); // Debug log
 
     return {
       regions,
