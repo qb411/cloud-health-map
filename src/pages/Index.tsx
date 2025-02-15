@@ -64,7 +64,10 @@ const Index = () => {
             Real-time status of AWS services across regions
           </p>
           <div className="mt-1 text-sm text-gray-500 space-y-1">
-            <p>Updates every {refreshInterval === NORMAL_REFRESH_RATE ? '15' : '5'} minutes</p>
+            <p>Status updates every 15 minutes under normal conditions</p>
+            <p className="text-xs text-gray-400">
+              * Scanning frequency automatically increases to every 5 minutes when issues or outages are detected
+            </p>
           </div>
         </div>
         
