@@ -2,7 +2,8 @@
 import { toast } from "@/hooks/use-toast";
 import { awsRegions, type AWSRegion } from "./aws-regions";
 
-const AWS_RSS_URL = 'https://status.aws.amazon.com/rss/';
+// Using a CORS proxy to access the AWS RSS feed
+const AWS_RSS_URL = 'https://cors-proxy.fringe.zone/https://status.aws.amazon.com/rss/';
 
 type RSSItem = {
   title: string;
@@ -34,8 +35,13 @@ export const fetchAWSHealth = async () => {
     const regionStatus = new Map<string, "operational" | "issue" | "outage">();
     awsRegions.forEach(region => regionStatus.set(region.code, "operational"));
 
-    // Fetch RSS feed
-    const response = await fetch(AWS_RSS_URL);
+    // Fetch RSS feed through CORS proxy
+    const response = await fetch(AWS_RSS_URL, {
+      headers: {
+        'Accept': 'application/rss+xml',
+      }
+    });
+    
     if (!response.ok) {
       throw new Error('Failed to fetch AWS RSS feed');
     }
