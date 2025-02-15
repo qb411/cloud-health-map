@@ -49,8 +49,8 @@ const RegionMap = () => {
       marker.bindPopup(`
         <div class="pt-1 px-1 pb-0.5">
           <h3 class="font-semibold leading-none">${region.name}</h3>
-          <p class="text-sm text-gray-500 mt-0.5 leading-none">${region.code}</p>
-          <p class="text-sm font-medium text-emerald-600 mt-2 mb-0 leading-none">${region.status || 'Operational'}</p>
+          <p class="text-sm text-gray-500 -mt-1 leading-none">${region.code}</p>
+          <p class="text-sm font-medium text-emerald-600 mt-1.5 mb-0 leading-none">${region.status || 'Operational'}</p>
         </div>
       `, {
         className: 'compact-popup'
