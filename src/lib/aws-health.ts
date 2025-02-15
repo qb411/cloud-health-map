@@ -70,6 +70,9 @@ export const fetchAWSHealth = async () => {
 
     // Simulate an outage in us-east-1 (N. Virginia)
     regionStatus.set("us-east-1", "outage");
+    
+    // Simulate an issue in us-west-2 (Oregon)
+    regionStatus.set("us-west-2", "issue");
 
     // Update region statuses
     return awsRegions.map(region => ({

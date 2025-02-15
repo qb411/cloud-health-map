@@ -64,7 +64,7 @@ const Index = () => {
           </p>
         </div>
         
-        <RegionSummary />
+        <RegionSummary regions={healthData} />
         
         <div className="h-4" />
         
