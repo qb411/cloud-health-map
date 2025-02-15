@@ -47,6 +47,34 @@ const getCountryFlag = (regionName: string): string => {
   return countryMap[regionName] || '🏳️';
 };
 
+// Helper function to get marker color based on status
+const getStatusColor = (status: "operational" | "issue" | "outage") => {
+  switch (status) {
+    case "operational":
+      return { fill: '#10B981', border: '#059669' }; // Green
+    case "issue":
+      return { fill: '#F59E0B', border: '#D97706' }; // Yellow/Orange
+    case "outage":
+      return { fill: '#EF4444', border: '#DC2626' }; // Red
+    default:
+      return { fill: '#10B981', border: '#059669' }; // Default to green
+  }
+};
+
+// Helper function to get status text color
+const getStatusTextColor = (status: "operational" | "issue" | "outage") => {
+  switch (status) {
+    case "operational":
+      return "text-emerald-600";
+    case "issue":
+      return "text-amber-600";
+    case "outage":
+      return "text-red-600";
+    default:
+      return "text-emerald-600";
+  }
+};
+
 const RegionMap = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
@@ -78,21 +106,24 @@ const RegionMap = () => {
 
     // Add markers for each AWS region
     awsRegions.forEach((region) => {
+      const colors = getStatusColor(region.status);
       const marker = L.circleMarker([region.location[1], region.location[0]], {
         radius: 8,
-        fillColor: '#10B981',
-        color: '#059669',
+        fillColor: colors.fill,
+        color: colors.border,
         weight: 1,
         opacity: 1,
         fillOpacity: 0.8
       }).addTo(map.current!);
 
-      // Add popup with tighter padding and country flag
+      // Add popup with region info
       marker.bindPopup(`
         <div class="pt-1 px-1 pb-0.5">
           <h3 class="font-semibold leading-none">${getCountryFlag(region.name)} ${region.name}</h3>
           <p class="text-sm text-gray-500 -mt-1 leading-none">${region.code}</p>
-          <p class="text-sm font-medium text-emerald-600 mt-1.5 mb-0 leading-none">${region.status || 'Operational'}</p>
+          <p class="text-sm font-medium ${getStatusTextColor(region.status)} mt-1.5 mb-0 leading-none">
+            ${region.status.charAt(0).toUpperCase() + region.status.slice(1)}
+          </p>
         </div>
       `, {
         className: 'compact-popup'
