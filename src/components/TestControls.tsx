@@ -36,9 +36,13 @@ const TestControls = ({ regions, onSimulateIssue }: TestControlsProps) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="gap-2 hover:bg-gray-100"
+        >
           <BeakerIcon className="h-4 w-4" />
-          Test Controls
+          Simulate Issue
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
@@ -82,7 +86,7 @@ const TestControls = ({ regions, onSimulateIssue }: TestControlsProps) => {
             disabled={!selectedRegion}
             className="w-full"
           >
-            Simulate Issue
+            Apply Simulation
           </Button>
         </div>
       </DialogContent>
