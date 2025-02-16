@@ -2,6 +2,7 @@
 import { toast } from "@/hooks/use-toast";
 import { awsRegions, type AWSRegion } from "./aws-regions";
 import { supabase } from "@/integrations/supabase/client";
+import { subDays } from "date-fns";
 
 const AWS_RSS_URL = 'https://status.aws.amazon.com/rss/all.rss';
 
@@ -124,10 +125,14 @@ export const fetchAWSHealth = async () => {
       status: regionStatus.get(region.code) || "operational"
     }));
 
+    // Calculate the date 7 days ago
+    const sevenDaysAgo = subDays(new Date(), 7).toISOString();
+
     // Get recent items from Supabase and map them to RSSItem format
     const { data: dbItems, error } = await supabase
       .from('aws_health_events')
       .select('*')
+      .gte('pub_date', sevenDaysAgo)
       .order('pub_date', { ascending: false });
 
     if (error) {
@@ -159,3 +164,4 @@ export const fetchAWSHealth = async () => {
     return null;
   }
 };
+
