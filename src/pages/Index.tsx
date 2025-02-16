@@ -3,9 +3,9 @@ import { useEffect, useState, useCallback } from "react";
 import RegionMap from "@/components/RegionMap";
 import RegionSummary from "@/components/RegionSummary";
 import StatusLog from "@/components/StatusLog";
+import TestControls from "@/components/TestControls";
 import { fetchAWSHealth } from "@/lib/aws-health";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
 import type { AWSRegion } from "@/lib/aws-regions";
 import type { RSSItem } from "@/lib/aws-health";
 
@@ -19,6 +19,7 @@ const Index = () => {
   const [recentItems, setRecentItems] = useState<RSSItem[]>([]);
   const [refreshInterval, setRefreshInterval] = useState(NORMAL_REFRESH_RATE);
   const [lastBuildDate, setLastBuildDate] = useState<string | null>(null);
+  const [simulatedIssues, setSimulatedIssues] = useState<Record<string, "issue" | "outage">>({});
 
   const checkForErrors = useCallback((data: AWSRegion[]) => {
     return data.some(region => region.status === 'issue' || region.status === 'outage');
@@ -28,12 +29,18 @@ const Index = () => {
     try {
       const data = await fetchAWSHealth();
       if (data) {
-        setHealthData(data.regions);
+        // Apply simulated issues over the fetched data
+        const updatedRegions = data.regions.map(region => ({
+          ...region,
+          status: simulatedIssues[region.code] || region.status
+        }));
+        
+        setHealthData(updatedRegions);
         setRecentItems(data.recentItems);
         setLastBuildDate(data.lastBuildDate);
         
         // Adjust refresh rate based on health status
-        const hasErrors = checkForErrors(data.regions);
+        const hasErrors = checkForErrors(updatedRegions);
         setRefreshInterval(hasErrors ? ERROR_REFRESH_RATE : NORMAL_REFRESH_RATE);
       }
       setLoading(false);
@@ -45,7 +52,30 @@ const Index = () => {
         variant: "destructive",
       });
     }
-  }, [toast, checkForErrors]);
+  }, [toast, checkForErrors, simulatedIssues]);
+
+  const handleSimulateIssue = useCallback((regionCode: string, status: "issue" | "outage") => {
+    setSimulatedIssues(prev => ({ ...prev, [regionCode]: status }));
+    
+    // Add a simulated RSS item
+    const now = new Date().toUTCString();
+    const newItem: RSSItem = {
+      title: `[TEST] ${status.toUpperCase()} detected in ${regionCode}`,
+      description: `This is a simulated ${status} for testing purposes.`,
+      pubDate: now,
+      guid: `test-${regionCode}-${Date.now()}`
+    };
+    
+    setRecentItems(prev => [newItem, ...prev]);
+    
+    toast({
+      title: "Test Event Created",
+      description: `Simulated ${status} for ${regionCode}`,
+    });
+
+    // Force an immediate health check
+    updateHealth();
+  }, [toast, updateHealth]);
 
   useEffect(() => {
     updateHealth();
@@ -57,12 +87,23 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            AWS Global Health Status
-          </h1>
-          <p className="mt-2 text-lg text-gray-600">
-            Real-time status of AWS services across regions
-          </p>
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1" />
+            <div className="text-center flex-1">
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                AWS Global Health Status
+              </h1>
+              <p className="mt-2 text-lg text-gray-600">
+                Real-time status of AWS services across regions
+              </p>
+            </div>
+            <div className="flex-1 flex justify-end">
+              <TestControls 
+                regions={healthData}
+                onSimulateIssue={handleSimulateIssue}
+              />
+            </div>
+          </div>
           <div className="mt-1 text-sm text-gray-500 space-y-1">
             <p>Status updates every 15 minutes under normal conditions</p>
             <p className="text-xs text-gray-400">
