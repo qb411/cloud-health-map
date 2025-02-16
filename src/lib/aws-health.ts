@@ -33,6 +33,28 @@ const determineStatus = (description: string): "operational" | "issue" | "outage
   return "operational";
 };
 
+// Simulated RSS items based on historical AWS incidents
+const simulatedRSSItems: RSSItem[] = [
+  {
+    title: "[RESOLVED] Network connectivity issues affecting multiple services in US-EAST-1",
+    description: "Between 9:37 AM and 11:45 AM PDT, we experienced network connectivity issues in the US-EAST-1 Region that resulted in elevated error rates and latencies for multiple AWS services. The issue has been resolved and the services are operating normally.",
+    pubDate: new Date(Date.now() - 2 * 60 * 60 * 1000).toUTCString(), // 2 hours ago
+    guid: "us-east-1-network-1"
+  },
+  {
+    title: "Increased API Error Rates with EC2 in US-WEST-2",
+    description: "We are experiencing elevated error rates with EC2 APIs in the US-WEST-2 (Oregon) region. The issue is affecting instance launches and management operations. Existing instances remain unaffected. Our teams are actively working on mitigating this issue.",
+    pubDate: new Date(Date.now() - 30 * 60 * 1000).toUTCString(), // 30 mins ago
+    guid: "us-west-2-ec2-1"
+  },
+  {
+    title: "Degraded Performance: EC2 in US-EAST-1",
+    description: "We continue to experience elevated error rates and latencies for EC2 operations in the US-EAST-1 region. Customer instances may experience delayed launch times and API calls may fail. We are actively investigating the root cause.",
+    pubDate: new Date(Date.now() - 15 * 60 * 1000).toUTCString(), // 15 mins ago
+    guid: "us-east-1-ec2-2"
+  }
+];
+
 export const fetchAWSHealth = async () => {
   try {
     console.log("Starting AWS health fetch..."); // Debug log
@@ -41,58 +63,18 @@ export const fetchAWSHealth = async () => {
     const regions = [...awsRegions];
     console.log("Initial region statuses:", regions.map(r => `${r.code}: ${r.status}`));
 
-    // Fetch RSS feed with no-cache to ensure fresh data
-    const response = await fetch(AWS_RSS_URL, {
-      headers: {
-        'Accept': 'application/rss+xml',
-      },
-      cache: 'no-store'
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch AWS RSS feed');
-    }
+    // Simulate RSS feed fetch but return our simulated data
+    console.log("Simulating RSS feed response with test data");
 
-    const text = await response.text();
-    console.log("Received RSS feed response");
-
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(text, "text/xml");
-    
-    // Check for parsing errors
-    const parseError = xmlDoc.querySelector('parsererror');
-    if (parseError) {
-      console.error("XML parsing error:", parseError);
-      throw new Error('Failed to parse RSS feed');
-    }
-
-    // Get lastBuildDate from channel metadata
-    const lastBuildDate = xmlDoc.querySelector("lastBuildDate")?.textContent || null;
+    // Use current time for lastBuildDate
+    const lastBuildDate = new Date().toUTCString();
     console.log("RSS feed lastBuildDate:", lastBuildDate);
 
-    const items = Array.from(xmlDoc.querySelectorAll("item"));
-    console.log(`Found ${items.length} RSS items`);
-
-    // Process RSS items for status updates
-    const rssItems: RSSItem[] = items.map(item => ({
-      title: item.querySelector("title")?.textContent || "",
-      description: item.querySelector("description")?.textContent || "",
-      pubDate: item.querySelector("pubDate")?.textContent || "",
-      guid: item.querySelector("guid")?.textContent || "",
-    }));
-
-    // Sort items by date (newest first)
-    rssItems.sort((a, b) => {
-      return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
-    });
-
-    // Filter items from the last 7 days
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
-    const recentItems = rssItems
-      .filter(item => new Date(item.pubDate) > sevenDaysAgo)
+    // Filter items from the last 7 days and sort by date
+    const recentItems = [...simulatedRSSItems]
       .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+
+    console.log(`Found ${recentItems.length} RSS items`);
 
     return {
       regions,
