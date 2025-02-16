@@ -17,6 +17,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [healthData, setHealthData] = useState<AWSRegion[]>([]);
   const [recentItems, setRecentItems] = useState<RSSItem[]>([]);
+  const [simulatedItems, setSimulatedItems] = useState<RSSItem[]>([]);
   const [refreshInterval, setRefreshInterval] = useState(NORMAL_REFRESH_RATE);
   const [lastBuildDate, setLastBuildDate] = useState<string | null>(null);
   const [simulatedIssues, setSimulatedIssues] = useState<Record<string, "issue" | "outage">>({});
@@ -36,7 +37,8 @@ const Index = () => {
         }));
         
         setHealthData(updatedRegions);
-        setRecentItems(data.recentItems);
+        // Combine simulated items with RSS feed items
+        setRecentItems([...simulatedItems, ...data.recentItems]);
         setLastBuildDate(data.lastBuildDate);
         
         // Adjust refresh rate based on health status
@@ -52,7 +54,7 @@ const Index = () => {
         variant: "destructive",
       });
     }
-  }, [toast, checkForErrors, simulatedIssues]);
+  }, [toast, checkForErrors, simulatedIssues, simulatedItems]);
 
   const handleSimulateIssue = useCallback((regionCode: string, status: "issue" | "outage") => {
     setSimulatedIssues(prev => ({ ...prev, [regionCode]: status }));
@@ -70,8 +72,8 @@ const Index = () => {
       guid: `test-${regionCode}-${Date.now()}`
     };
     
-    // Add the new item to the beginning of recentItems
-    setRecentItems(prev => [newItem, ...prev]);
+    // Add the new item to simulated items
+    setSimulatedItems(prev => [newItem, ...prev]);
     
     toast({
       title: "Test Event Created",
