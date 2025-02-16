@@ -1,6 +1,7 @@
 
 import { toast } from "@/hooks/use-toast";
 import { awsRegions, type AWSRegion } from "./aws-regions";
+import { supabase } from "@/integrations/supabase/client";
 
 const AWS_RSS_URL = 'https://status.aws.amazon.com/rss/all.rss';
 
@@ -81,6 +82,24 @@ export const fetchAWSHealth = async () => {
       guid: item.querySelector("guid")?.textContent || "",
     }));
 
+    // Store new items in Supabase
+    for (const item of rssItems) {
+      const { error } = await supabase
+        .from('aws_health_events')
+        .upsert({
+          title: item.title,
+          description: item.description,
+          pub_date: new Date(item.pubDate).toISOString(),
+          guid: item.guid,
+        }, {
+          onConflict: 'guid'
+        });
+      
+      if (error) {
+        console.error("Error storing event:", error);
+      }
+    }
+
     // Sort items by date (newest first)
     rssItems.sort((a, b) => {
       return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
@@ -105,17 +124,20 @@ export const fetchAWSHealth = async () => {
       status: regionStatus.get(region.code) || "operational"
     }));
 
-    // Filter items from the last 7 days
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
-    const recentItems = rssItems
-      .filter(item => new Date(item.pubDate) > sevenDaysAgo)
-      .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+    // Get recent items from Supabase instead of filtering locally
+    const { data: recentItems, error } = await supabase
+      .from('aws_health_events')
+      .select('*')
+      .order('pub_date', { ascending: false });
+
+    if (error) {
+      console.error("Error fetching recent items:", error);
+      throw error;
+    }
 
     return {
       regions,
-      recentItems,
+      recentItems: recentItems || [],
       lastBuildDate
     };
 

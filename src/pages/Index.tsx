@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import RegionMap from "@/components/RegionMap";
 import RegionSummary from "@/components/RegionSummary";
@@ -7,6 +8,7 @@ import { fetchAWSHealth } from "@/lib/aws-health";
 import { useToast } from "@/hooks/use-toast";
 import type { AWSRegion } from "@/lib/aws-regions";
 import type { RSSItem } from "@/lib/aws-health";
+import { supabase } from "@/integrations/supabase/client";
 
 const NORMAL_REFRESH_RATE = 15 * 60 * 1000; // 15 minutes in milliseconds
 const ERROR_REFRESH_RATE = 5 * 60 * 1000;   // 5 minutes in milliseconds
@@ -20,6 +22,28 @@ const Index = () => {
   const [refreshInterval, setRefreshInterval] = useState(NORMAL_REFRESH_RATE);
   const [lastBuildDate, setLastBuildDate] = useState<string | null>(null);
   const [simulatedIssues, setSimulatedIssues] = useState<Record<string, "issue" | "outage">>({});
+
+  // Subscribe to real-time updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('aws-health-events')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'aws_health_events' 
+        }, 
+        () => {
+          // Refresh data when we receive updates
+          updateHealth();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const checkForErrors = useCallback((data: AWSRegion[]) => {
     return data.some(region => region.status === 'issue' || region.status === 'outage');
@@ -37,7 +61,7 @@ const Index = () => {
         
         setHealthData(updatedRegions);
         
-        // Combine simulated items with RSS feed items
+        // Combine simulated items with database items
         setRecentItems([...simulatedItems, ...data.recentItems]);
         setLastBuildDate(data.lastBuildDate);
         
