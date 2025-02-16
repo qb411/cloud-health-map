@@ -37,9 +37,9 @@ export const fetchAWSHealth = async () => {
   try {
     console.log("Starting AWS health fetch..."); // Debug log
 
-    // Start with all regions operational
-    const regionStatus = new Map<string, "operational" | "issue" | "outage">();
-    awsRegions.forEach(region => regionStatus.set(region.code, "operational"));
+    // Use awsRegions directly instead of resetting all to operational
+    const regions = [...awsRegions];
+    console.log("Initial region statuses:", regions.map(r => `${r.code}: ${r.status}`));
 
     // Fetch RSS feed with no-cache to ensure fresh data
     const response = await fetch(AWS_RSS_URL, {
@@ -85,25 +85,6 @@ export const fetchAWSHealth = async () => {
     rssItems.sort((a, b) => {
       return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
     });
-
-    // Process each RSS item for region status
-    rssItems.forEach(item => {
-      const regionCode = parseRegionFromTitle(item.title);
-      if (regionCode && regionStatus.has(regionCode)) {
-        const status = determineStatus(item.description);
-        const currentStatus = regionStatus.get(regionCode);
-        if (currentStatus === "operational" || 
-            (currentStatus === "issue" && status === "outage")) {
-          regionStatus.set(regionCode, status);
-        }
-      }
-    });
-
-    // Update region statuses
-    const regions = awsRegions.map(region => ({
-      ...region,
-      status: regionStatus.get(region.code) || "operational"
-    }));
 
     // Filter items from the last 7 days
     const sevenDaysAgo = new Date();
