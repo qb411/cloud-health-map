@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
-  base: "/aws-health-monitor/", // Using your existing repository name
+  base: "/aws-health-monitor/", // Using your repository name
   plugins: [
     react(),
     mode === 'development' &&
