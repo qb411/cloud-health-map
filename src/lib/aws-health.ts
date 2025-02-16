@@ -124,8 +124,8 @@ export const fetchAWSHealth = async () => {
       status: regionStatus.get(region.code) || "operational"
     }));
 
-    // Get recent items from Supabase instead of filtering locally
-    const { data: recentItems, error } = await supabase
+    // Get recent items from Supabase and map them to RSSItem format
+    const { data: dbItems, error } = await supabase
       .from('aws_health_events')
       .select('*')
       .order('pub_date', { ascending: false });
@@ -135,9 +135,17 @@ export const fetchAWSHealth = async () => {
       throw error;
     }
 
+    // Map database items to RSSItem format
+    const recentItems: RSSItem[] = (dbItems || []).map(item => ({
+      title: item.title,
+      description: item.description,
+      pubDate: new Date(item.pub_date).toUTCString(), // Convert to UTC string to match RSS format
+      guid: item.guid
+    }));
+
     return {
       regions,
-      recentItems: recentItems || [],
+      recentItems,
       lastBuildDate
     };
 
