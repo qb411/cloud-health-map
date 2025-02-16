@@ -57,15 +57,20 @@ const Index = () => {
   const handleSimulateIssue = useCallback((regionCode: string, status: "issue" | "outage") => {
     setSimulatedIssues(prev => ({ ...prev, [regionCode]: status }));
     
+    // Get the region name from healthData
+    const region = healthData.find(r => r.code === regionCode);
+    const regionName = region ? region.name : regionCode;
+    
     // Add a simulated RSS item
     const now = new Date().toUTCString();
     const newItem: RSSItem = {
       title: `[TEST] ${status.toUpperCase()} detected in ${regionCode}`,
-      description: `This is a simulated ${status} for testing purposes.`,
+      description: `This is a simulated ${status} in the ${regionName} region for testing purposes.`,
       pubDate: now,
       guid: `test-${regionCode}-${Date.now()}`
     };
     
+    // Add the new item to the beginning of recentItems
     setRecentItems(prev => [newItem, ...prev]);
     
     toast({
@@ -75,7 +80,7 @@ const Index = () => {
 
     // Force an immediate health check
     updateHealth();
-  }, [toast, updateHealth]);
+  }, [toast, updateHealth, healthData]);
 
   useEffect(() => {
     updateHealth();
