@@ -1,12 +1,13 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -26,16 +27,18 @@ interface TestControlsProps {
 const TestControls = ({ regions, onSimulateIssue }: TestControlsProps) => {
   const [selectedRegion, setSelectedRegion] = useState<string>("");
   const [selectedStatus, setSelectedStatus] = useState<"issue" | "outage">("issue");
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleSimulate = () => {
     if (selectedRegion) {
       onSimulateIssue(selectedRegion, selectedStatus);
+      setIsOpen(false); // Close the dropdown after simulation
     }
   };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger asChild>
         <Button 
           variant="outline" 
           size="sm" 
@@ -44,53 +47,50 @@ const TestControls = ({ regions, onSimulateIssue }: TestControlsProps) => {
           <BeakerIcon className="h-4 w-4" />
           Test Controls
         </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Simulate AWS Region Issue</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Select
-              value={selectedRegion}
-              onValueChange={setSelectedRegion}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select region" />
-              </SelectTrigger>
-              <SelectContent>
-                {regions.map((region) => (
-                  <SelectItem key={region.code} value={region.code}>
-                    {region.name} ({region.code})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-2">
-            <Select
-              value={selectedStatus}
-              onValueChange={(value: "issue" | "outage") => setSelectedStatus(value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="issue">Issue (Yellow)</SelectItem>
-                <SelectItem value="outage">Outage (Red)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56 p-2" align="end">
+        <DropdownMenuLabel>Simulate AWS Issue</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <div className="p-2 space-y-4">
+          <Select
+            value={selectedRegion}
+            onValueChange={setSelectedRegion}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select region" />
+            </SelectTrigger>
+            <SelectContent>
+              {regions.map((region) => (
+                <SelectItem key={region.code} value={region.code}>
+                  {region.name} ({region.code})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={selectedStatus}
+            onValueChange={(value: "issue" | "outage") => setSelectedStatus(value)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="issue">Issue (Yellow)</SelectItem>
+              <SelectItem value="outage">Outage (Red)</SelectItem>
+            </SelectContent>
+          </Select>
+
           <Button 
             onClick={handleSimulate} 
             disabled={!selectedRegion}
             className="w-full"
           >
-            Simulate Issue
+            Apply Simulation
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 
