@@ -1,4 +1,3 @@
-
 export type AWSRegion = {
   name: string;
   code: string;
@@ -191,7 +190,7 @@ export const awsRegions: AWSRegion[] = [
     name: "US East (N. Virginia)",
     code: "us-east-1",
     location: [-77.0369, 38.9072],
-    status: "outage", // Simulated outage
+    status: "operational",
   },
   {
     name: "US East (Ohio)",
@@ -209,6 +208,6 @@ export const awsRegions: AWSRegion[] = [
     name: "US West (Oregon)",
     code: "us-west-2",
     location: [-122.6784, 45.5155],
-    status: "issue", // Simulated issue
+    status: "operational",
   },
 ];

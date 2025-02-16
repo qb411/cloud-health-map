@@ -9,9 +9,8 @@ import { format } from "date-fns";
 import type { AWSRegion } from "@/lib/aws-regions";
 import type { RSSItem } from "@/lib/aws-health";
 
-// Temporary test values
-const NORMAL_REFRESH_RATE = 45 * 1000; // 45 seconds for testing
-const ERROR_REFRESH_RATE = 45 * 1000;   // 45 seconds for testing
+const NORMAL_REFRESH_RATE = 15 * 60 * 1000; // 15 minutes in milliseconds
+const ERROR_REFRESH_RATE = 5 * 60 * 1000;   // 5 minutes in milliseconds
 
 const Index = () => {
   const { toast } = useToast();
@@ -36,9 +35,6 @@ const Index = () => {
         // Adjust refresh rate based on health status
         const hasErrors = checkForErrors(data.regions);
         setRefreshInterval(hasErrors ? ERROR_REFRESH_RATE : NORMAL_REFRESH_RATE);
-
-        // Log the update for testing
-        console.log('Health data updated at:', new Date().toISOString());
       }
       setLoading(false);
     } catch (error) {
