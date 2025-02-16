@@ -48,7 +48,7 @@ const TestControls = ({ regions, onSimulateIssue }: TestControlsProps) => {
           Test Controls
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 p-2" align="end">
+      <DropdownMenuContent className="w-56 p-2 z-[100]" align="end">
         <DropdownMenuLabel>Simulate AWS Issue</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <div className="p-2 space-y-4">
@@ -59,7 +59,7 @@ const TestControls = ({ regions, onSimulateIssue }: TestControlsProps) => {
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select region" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[101]">
               {regions.map((region) => (
                 <SelectItem key={region.code} value={region.code}>
                   {region.name} ({region.code})
@@ -75,7 +75,7 @@ const TestControls = ({ regions, onSimulateIssue }: TestControlsProps) => {
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[101]">
               <SelectItem value="issue">Issue (Yellow)</SelectItem>
               <SelectItem value="outage">Outage (Red)</SelectItem>
             </SelectContent>
