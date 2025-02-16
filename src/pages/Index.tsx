@@ -11,12 +11,17 @@ import type { RSSItem } from "@/lib/aws-health";
 
 const NORMAL_REFRESH_RATE = 15 * 60 * 1000; // 15 minutes in milliseconds
 const ERROR_REFRESH_RATE = 5 * 60 * 1000;   // 5 minutes in milliseconds
+const LOCAL_STORAGE_KEY = 'aws-health-feed';
 
 const Index = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [healthData, setHealthData] = useState<AWSRegion[]>([]);
-  const [recentItems, setRecentItems] = useState<RSSItem[]>([]);
+  const [recentItems, setRecentItems] = useState<RSSItem[]>(() => {
+    // Initialize from localStorage if available
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  });
   const [simulatedItems, setSimulatedItems] = useState<RSSItem[]>([]);
   const [refreshInterval, setRefreshInterval] = useState(NORMAL_REFRESH_RATE);
   const [lastBuildDate, setLastBuildDate] = useState<string | null>(null);
@@ -37,6 +42,12 @@ const Index = () => {
         }));
         
         setHealthData(updatedRegions);
+        
+        // Update localStorage with the new RSS items
+        if (data.recentItems.length > 0) {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data.recentItems));
+        }
+        
         // Combine simulated items with RSS feed items
         setRecentItems([...simulatedItems, ...data.recentItems]);
         setLastBuildDate(data.lastBuildDate);
@@ -44,10 +55,24 @@ const Index = () => {
         // Adjust refresh rate based on health status
         const hasErrors = checkForErrors(updatedRegions);
         setRefreshInterval(hasErrors ? ERROR_REFRESH_RATE : NORMAL_REFRESH_RATE);
+      } else {
+        // If fetch fails, use stored data
+        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (stored) {
+          const storedItems = JSON.parse(stored);
+          setRecentItems([...simulatedItems, ...storedItems]);
+        }
       }
       setLoading(false);
     } catch (error) {
       console.error("Failed to fetch health data:", error);
+      // On error, try to load from localStorage
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (stored) {
+        const storedItems = JSON.parse(stored);
+        setRecentItems([...simulatedItems, ...storedItems]);
+      }
+      
       toast({
         title: "Error",
         description: "Failed to fetch AWS health status",
