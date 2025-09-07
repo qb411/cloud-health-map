@@ -143,7 +143,8 @@ const RegionMap = ({ regions }: RegionMapProps) => {
         gap: 6px;
       }
       .aws-popup-body {
-        padding: 12px;
+        padding: 8px 12px;
+        text-align: center;
       }
     `;
     document.head.appendChild(style);
@@ -180,17 +181,16 @@ const RegionMap = ({ regions }: RegionMapProps) => {
           <span>AWS Region</span>
         </div>
         <div class="aws-popup-body">
-          <h3 class="font-semibold text-gray-900 leading-tight">${getCountryFlag(region.name)}${region.name}</h3>
-          <p class="text-xs text-gray-500 mt-1">${region.code}</p>
-          <div class="flex items-center gap-2 mt-3">
-            <div class="w-2 h-2 rounded-full ${region.status === 'operational' ? 'bg-emerald-500' : region.status === 'issue' ? 'bg-amber-500' : 'bg-red-500'}"></div>
-            <p class="text-sm font-medium ${getStatusTextColor(region.status)}">
-              ${region.status.charAt(0).toUpperCase() + region.status.slice(1)}
-            </p>
-          </div>
+          <h3 class="font-semibold text-gray-900 leading-tight" style="margin: 0;">${getCountryFlag(region.name)}${region.name}</h3>
+          <p class="text-xs text-gray-500" style="margin: 2px 0 0 0;">${region.code}</p>
+          <span class="px-2 py-1 rounded text-xs font-medium ${region.status === 'operational' ? 'bg-emerald-100 text-emerald-800' : region.status === 'issue' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}" style="display: block; width: fit-content; margin: 4px auto 0 auto;">
+            ${region.status.charAt(0).toUpperCase() + region.status.slice(1)}
+          </span>
         </div>
       `, {
-        className: 'aws-region-popup'
+        className: 'aws-region-popup',
+        autoPan: true,
+        keepInView: true
       });
 
       // Add hover effect

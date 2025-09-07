@@ -351,6 +351,133 @@ cd /mnt/c/CODE/cloud-health-map/versions/v2-static-github && sleep 3 && tail -5 
 
 ---
 
+## Session 4 - September 6, 2025 (Evening)
+
+### Session Overview
+- **Duration**: ~30 minutes
+- **Focus**: Popup layout improvements and localStorage architecture issue discovery
+- **Participants**: User + AI Assistant
+
+### Accomplishments
+1. **Popup Layout Fixed** ✅
+   - Implemented Option 3 (Status Badge) from popup-test.html
+   - Resolved spacing issues with inline CSS styles
+   - Achieved centered, professional badge appearance
+   - Fixed 20px spacing problem between popup elements
+
+2. **Critical Architecture Issue Identified** ⚠️
+   - Discovered localStorage won't work for multi-user public website
+   - Each browser has separate localStorage = inconsistent data across users
+   - Need unified data source for all website visitors
+
+3. **EC2 Solution Architecture Planned** 📋
+   - Proposed t3.nano/t3a.nano EC2 instance for RSS scraping
+   - GitHub Pages remains main hosting (static frontend)
+   - EC2 serves only JSON API endpoints
+   - Solves CORS issues and provides unified data
+
+### Technical Changes Made
+- **RegionMap.tsx**: Updated popup HTML structure
+  - Replaced dot + text layout with colored status badge
+  - Used inline CSS styles to override Tailwind spacing conflicts
+  - Precise margin control: h3 (0px), p (2px top), badge (4px top, centered)
+  - Badge colors: green (operational), amber (issue), red (outage)
+
+### Issues Identified
+1. **localStorage Multi-User Problem**
+   - User A visits at 2:00 PM → gets fresh data
+   - User B visits at 2:05 PM → gets different localStorage state
+   - Results in inconsistent status information across users
+
+2. **CORS Limitations**
+   - Direct RSS fetching from browser has CORS restrictions
+   - S3 static hosting has additional CORS limitations
+   - Need server-side solution for reliable RSS access
+
+### Architecture Decision: EC2 + GitHub Pages Hybrid
+
+**Proposed Architecture:**
+```
+Users → GitHub Pages (Static Frontend)
+           ↓ (API calls only)
+        EC2 t3a.nano (Data API)
+           ↓ (RSS scraping)
+        AWS Status RSS Feed
+```
+
+**EC2 Role:**
+- Background RSS scraping every 5-10 minutes
+- SQLite database for data persistence
+- Simple Express.js API server
+- CORS-enabled JSON endpoints
+- Cost: ~$3.50/month
+
+**GitHub Pages Role:**
+- Main website hosting (free)
+- All static assets (HTML/CSS/JS)
+- User-facing interface
+- SEO and discoverability
+
+**Benefits:**
+- Unified data across all users
+- Reliable RSS scraping without CORS issues
+- Minimal EC2 load (t3.nano sufficient)
+- GitHub Pages handles all traffic/bandwidth
+- Predictable costs vs Lambda cold starts
+
+### Current State
+- **V2 Static**: Popup layout perfected, but localStorage architecture needs replacement
+- **Development Server**: Running on http://localhost:8080/cloud-health-map/
+- **Popup Design**: Option 3 badge layout successfully implemented
+- **Next Phase**: Replace localStorage with EC2 API integration
+
+### Technical Implementation Details
+
+**Popup Layout Solution:**
+```html
+<h3 style="margin: 0;">Region Name</h3>
+<p style="margin: 2px 0 0 0;">Region Code</p>
+<span style="display: block; width: fit-content; margin: 4px auto 0 auto;">
+  Status Badge
+</span>
+```
+
+**Key Learning:** Tailwind CSS margin classes conflicted with Leaflet popup styling. Inline CSS provided precise control.
+
+### Next Session Goals
+1. **Design EC2 API Structure**
+   - Define JSON response format
+   - Plan RSS scraping intervals
+   - Design SQLite schema
+
+2. **Update Frontend for API Integration**
+   - Replace localStorage calls with fetch() to EC2
+   - Handle API loading states
+   - Implement error fallbacks
+
+3. **EC2 Setup Planning**
+   - Choose t3.nano vs t3a.nano
+   - Plan Express.js server structure
+   - Design deployment process
+
+### Questions for Next Session
+- Should we use PM2 for process management on EC2?
+- SQLite vs in-memory storage for RSS data?
+- How to handle EC2 downtime gracefully in frontend?
+- Domain setup for EC2 API endpoint?
+
+### Files Modified This Session
+- `versions/v2-static-github/src/components/RegionMap.tsx` - Popup layout and spacing fixes
+
+### Context for Future Sessions
+- **popup-test.html** contains 5 layout options tested (Option 3 chosen)
+- **localStorage issue** discovered: not suitable for multi-user public sites
+- **EC2 solution** preferred over Lambda for reliability
+- **CORS problems** with direct RSS fetching from browser
+- **GitHub Pages + EC2 hybrid** architecture decided
+
+---
+
 ## Session Template
 
 ### Session [N] - [Date]

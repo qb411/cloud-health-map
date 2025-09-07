@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Region Popup Layout Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .popup-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e5e7eb;
+            padding: 0;
+            width: 200px;
+            margin: 20px;
+        }
+        .aws-popup-header {
+            background: linear-gradient(135deg, #ff9900 0%, #ff7700 100%);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 12px 12px 0 0;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .aws-popup-body {
+            padding: 8px 12px;
+        }
+        .aws-popup-header-flex {
+            background: linear-gradient(135deg, #ff9900 0%, #ff7700 100%);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 12px 12px 0 0;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <h1 class="text-2xl font-bold mb-8 text-center">AWS Region Popup Layout Options</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
+        
+        <!-- Current Implementation -->
+        <div class="text-center">
+            <h2 class="text-lg font-semibold mb-4">Current (Vertical with Dot)</h2>
+            <div class="popup-container">
+                <div class="aws-popup-header">
+                    <span>AWS Region</span>
+                </div>
+                <div class="aws-popup-body">
+                    <h3 class="font-semibold text-gray-900 leading-tight">
+                        <img src="https://flagcdn.com/16x12/se.png" alt="se" class="inline-block mr-1" style="vertical-align: middle;">
+                        Europe (Stockholm)
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-1">eu-north-1</p>
+                    <div class="flex items-center gap-2 mt-3">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                        <p class="text-sm font-medium text-emerald-600">Operational</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Option 1: Inline Status -->
+        <div class="text-center">
+            <h2 class="text-lg font-semibold mb-4">Option 1: Inline Status</h2>
+            <div class="popup-container">
+                <div class="aws-popup-header">
+                    <span>AWS Region</span>
+                </div>
+                <div class="aws-popup-body">
+                    <h3 class="font-semibold text-gray-900 leading-tight">
+                        <img src="https://flagcdn.com/16x12/se.png" alt="se" class="inline-block mr-1" style="vertical-align: middle;">
+                        Europe (Stockholm)
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-1">eu-north-1 • <span class="text-emerald-600 font-medium">Operational</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Option 2: Right-Aligned Status -->
+        <div class="text-center">
+            <h2 class="text-lg font-semibold mb-4">Option 2: Right-Aligned</h2>
+            <div class="popup-container">
+                <div class="aws-popup-header">
+                    <span>AWS Region</span>
+                </div>
+                <div class="aws-popup-body">
+                    <h3 class="font-semibold text-gray-900 leading-tight">
+                        <img src="https://flagcdn.com/16x12/se.png" alt="se" class="inline-block mr-1" style="vertical-align: middle;">
+                        Europe (Stockholm)
+                    </h3>
+                    <div class="flex justify-between items-center mt-1">
+                        <p class="text-xs text-gray-500">eu-north-1</p>
+                        <span class="text-xs font-medium text-emerald-600">Operational</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Option 3: Status Badge -->
+        <div class="text-center">
+            <h2 class="text-lg font-semibold mb-4">Option 3: Status Badge</h2>
+            <div class="popup-container">
+                <div class="aws-popup-header">
+                    <span>AWS Region</span>
+                </div>
+                <div class="aws-popup-body">
+                    <h3 class="font-semibold text-gray-900 leading-tight">
+                        <img src="https://flagcdn.com/16x12/se.png" alt="se" class="inline-block mr-1" style="vertical-align: middle;">
+                        Europe (Stockholm)
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-1">eu-north-1</p>
+                    <span class="inline-block bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-xs font-medium mt-2">Operational</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Option 4: Compact Vertical -->
+        <div class="text-center">
+            <h2 class="text-lg font-semibold mb-4">Option 4: Compact Vertical</h2>
+            <div class="popup-container">
+                <div class="aws-popup-header">
+                    <span>AWS Region</span>
+                </div>
+                <div class="aws-popup-body">
+                    <h3 class="font-semibold text-gray-900 leading-tight">
+                        <img src="https://flagcdn.com/16x12/se.png" alt="se" class="inline-block mr-1" style="vertical-align: middle;">
+                        Europe (Stockholm)
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-1">eu-north-1</p>
+                    <p class="text-xs text-emerald-600 font-medium mt-1">● Operational</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Option 5: Header Integration -->
+        <div class="text-center">
+            <h2 class="text-lg font-semibold mb-4">Option 5: Header Integration</h2>
+            <div class="popup-container">
+                <div class="aws-popup-header-flex">
+                    <span>AWS Region</span>
+                    <span class="text-xs">● Operational</span>
+                </div>
+                <div class="aws-popup-body">
+                    <h3 class="font-semibold text-gray-900 leading-tight">
+                        <img src="https://flagcdn.com/16x12/se.png" alt="se" class="inline-block mr-1" style="vertical-align: middle;">
+                        Europe (Stockholm)
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-1">eu-north-1</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Error State Examples -->
+    <h2 class="text-xl font-bold mt-12 mb-6 text-center">Error State Examples</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
+        
+        <!-- Current with Issue -->
+        <div class="text-center">
+            <h3 class="text-md font-semibold mb-4">Current (Issue)</h3>
+            <div class="popup-container">
+                <div class="aws-popup-header">
+                    <span>AWS Region</span>
+                </div>
+                <div class="aws-popup-body">
+                    <h3 class="font-semibold text-gray-900 leading-tight">
+                        <img src="https://flagcdn.com/16x12/us.png" alt="us" class="inline-block mr-1" style="vertical-align: middle;">
+                        US East (N. Virginia)
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-1">us-east-1</p>
+                    <div class="flex items-center gap-2 mt-3">
+                        <div class="w-2 h-2 rounded-full bg-amber-500"></div>
+                        <p class="text-sm font-medium text-amber-600">Issue</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Option 1 with Issue -->
+        <div class="text-center">
+            <h3 class="text-md font-semibold mb-4">Option 1 (Issue)</h3>
+            <div class="popup-container">
+                <div class="aws-popup-header">
+                    <span>AWS Region</span>
+                </div>
+                <div class="aws-popup-body">
+                    <h3 class="font-semibold text-gray-900 leading-tight">
+                        <img src="https://flagcdn.com/16x12/us.png" alt="us" class="inline-block mr-1" style="vertical-align: middle;">
+                        US East (N. Virginia)
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-1">us-east-1 • <span class="text-amber-600 font-medium">Issue</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Option 4 with Issue -->
+        <div class="text-center">
+            <h3 class="text-md font-semibold mb-4">Option 4 (Issue)</h3>
+            <div class="popup-container">
+                <div class="aws-popup-header">
+                    <span>AWS Region</span>
+                </div>
+                <div class="aws-popup-body">
+                    <h3 class="font-semibold text-gray-900 leading-tight">
+                        <img src="https://flagcdn.com/16x12/us.png" alt="us" class="inline-block mr-1" style="vertical-align: middle;">
+                        US East (N. Virginia)
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-1">us-east-1</p>
+                    <p class="text-xs text-amber-600 font-medium mt-1">● Issue</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
