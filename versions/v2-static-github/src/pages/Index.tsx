@@ -26,15 +26,21 @@ const Index = () => {
     return data.some(region => region.status === 'issue' || region.status === 'outage');
   }, []);
 
-  const updateHealth = useCallback(async () => {
+  const updateHealth = useCallback(async (customSimulatedIssues?: Record<string, "issue" | "outage">) => {
     try {
       const data = await fetchAWSHealth();
       if (data) {
+        // Use custom simulated issues if provided, otherwise use state
+        const currentSimulatedIssues = customSimulatedIssues || simulatedIssues;
+        
         // Apply simulated issues over the fetched data
         const updatedRegions = data.regions.map(region => ({
           ...region,
-          status: simulatedIssues[region.code] || region.status
+          status: currentSimulatedIssues[region.code] || region.status
         }));
+        
+        console.log('Applied simulated issues:', currentSimulatedIssues);
+        console.log('Updated regions:', updatedRegions.filter(r => r.status !== 'operational'));
         
         setHealthData(updatedRegions);
         
@@ -60,7 +66,13 @@ const Index = () => {
   }, [toast, checkForErrors, simulatedIssues, simulatedItems]);
 
   const handleSimulateIssue = useCallback((regionCode: string, status: "issue" | "outage") => {
-    setSimulatedIssues(prev => ({ ...prev, [regionCode]: status }));
+    console.log(`Simulating ${status} for region ${regionCode}`);
+    
+    // Create new simulated issues object
+    const newSimulatedIssues = { ...simulatedIssues, [regionCode]: status };
+    
+    // Update state
+    setSimulatedIssues(newSimulatedIssues);
     
     // Get the region name from healthData
     const region = healthData.find(r => r.code === regionCode);
@@ -83,9 +95,9 @@ const Index = () => {
       description: `Simulated ${status} for ${regionCode}`,
     });
 
-    // Force an immediate health check
-    updateHealth();
-  }, [toast, updateHealth, healthData]);
+    // Force an immediate health check with the new simulated issues
+    updateHealth(newSimulatedIssues);
+  }, [toast, updateHealth, healthData, simulatedIssues]);
 
   const handleManualRefresh = useCallback(() => {
     setLoading(true);

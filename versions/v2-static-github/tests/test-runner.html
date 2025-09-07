@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Health Map - Test Runner</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .test-result { margin: 10px 0; padding: 15px; border-radius: 6px; border-left: 4px solid; }
+        .pass { background-color: #d4edda; border-left-color: #28a745; color: #155724; }
+        .fail { background-color: #f8d7da; border-left-color: #dc3545; color: #721c24; }
+        .info { background-color: #d1ecf1; border-left-color: #17a2b8; color: #0c5460; }
+        .warning { background-color: #fff3cd; border-left-color: #ffc107; color: #856404; }
+        button { margin: 5px; padding: 10px 20px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-danger { background: #dc3545; color: white; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 6px; }
+        .summary { background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 20px 0; }
+        h1, h2, h3 { color: #333; }
+        .code { background: #f8f9fa; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+        .progress { width: 100%; height: 20px; background: #e9ecef; border-radius: 10px; overflow: hidden; margin: 10px 0; }
+        .progress-bar { height: 100%; background: #28a745; transition: width 0.3s ease; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 AWS Health Map - Test Runner</h1>
+        
+        <div class="summary">
+            <h3>Test Suite Overview</h3>
+            <div id="test-summary">
+                <div>Total Tests: <span id="total-tests">0</span></div>
+                <div>Passed: <span id="passed-tests" style="color: #28a745;">0</span></div>
+                <div>Failed: <span id="failed-tests" style="color: #dc3545;">0</span></div>
+                <div class="progress">
+                    <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🚀 Run Test Suites</h2>
+            <button class="btn-success" onclick="runAllTests()">Run All Tests</button>
+            <button class="btn-primary" onclick="runUnitTests()">Unit Tests Only</button>
+            <button class="btn-primary" onclick="runIntegrationTests()">Integration Tests Only</button>
+            <button class="btn-warning" onclick="runE2ETests()">E2E Tests Only</button>
+            <button class="btn-danger" onclick="clearResults()">Clear Results</button>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 Test Results</h2>
+            <div id="test-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔗 Quick Links</h2>
+            <button class="btn-primary" onclick="openMainApp()">Open Main App</button>
+            <button class="btn-primary" onclick="openTestAutomation()">Open Test Automation</button>
+            <button class="btn-warning" onclick="downloadResults()">Download Results</button>
+        </div>
+
+        <div class="test-section">
+            <h2>📖 Manual Test Instructions</h2>
+            <div class="info">
+                <h4>Required Manual Tests:</h4>
+                <ol>
+                    <li><strong>Issue Simulation:</strong> Test Controls → Select Region → Issue (Yellow) → Apply</li>
+                    <li><strong>Outage Simulation:</strong> Test Controls → Select Region → Outage (Red) → Apply</li>
+                    <li><strong>Map Interaction:</strong> Click markers, verify popups, check flag images</li>
+                    <li><strong>Responsive Design:</strong> Test on mobile/tablet devices</li>
+                    <li><strong>Accessibility:</strong> Test keyboard navigation and screen readers</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load test modules -->
+    <script src="unit/status-mapping.test.js"></script>
+    <script src="integration/test-controls.test.js"></script>
+    <script src="e2e/user-workflows.test.js"></script>
+
+    <script>
+        const testResults = document.getElementById('test-results');
+        const totalTestsSpan = document.getElementById('total-tests');
+        const passedTestsSpan = document.getElementById('passed-tests');
+        const failedTestsSpan = document.getElementById('failed-tests');
+        const progressBar = document.getElementById('progress-bar');
+        
+        let totalTests = 0;
+        let passedTests = 0;
+        let failedTests = 0;
+        let allResults = [];
+
+        function addTestResult(suiteName, name, passed, message, details = '') {
+            const div = document.createElement('div');
+            div.className = `test-result ${passed ? 'pass' : 'fail'}`;
+            div.innerHTML = `
+                <strong>[${suiteName}] ${name}:</strong> ${passed ? '✅ PASS' : '❌ FAIL'} - ${message}
+                ${details ? `<br><small>${details}</small>` : ''}
+            `;
+            testResults.appendChild(div);
+            
+            // Update counters
+            totalTests++;
+            if (passed) passedTests++;
+            else failedTests++;
+            
+            updateSummary();
+            
+            // Store result
+            allResults.push({
+                suite: suiteName,
+                test: name,
+                passed,
+                message,
+                details,
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        function addInfoResult(suiteName, message) {
+            const div = document.createElement('div');
+            div.className = 'test-result info';
+            div.innerHTML = `<strong>[${suiteName}]</strong> ℹ️ ${message}`;
+            testResults.appendChild(div);
+        }
+
+        function updateSummary() {
+            totalTestsSpan.textContent = totalTests;
+            passedTestsSpan.textContent = passedTests;
+            failedTestsSpan.textContent = failedTests;
+            
+            const percentage = totalTests > 0 ? (passedTests / totalTests) * 100 : 0;
+            progressBar.style.width = `${percentage}%`;
+            
+            if (failedTests > 0) {
+                progressBar.style.background = '#dc3545';
+            } else if (passedTests > 0) {
+                progressBar.style.background = '#28a745';
+            }
+        }
+
+        function clearResults() {
+            testResults.innerHTML = '';
+            totalTests = 0;
+            passedTests = 0;
+            failedTests = 0;
+            allResults = [];
+            updateSummary();
+        }
+
+        function runUnitTests() {
+            addInfoResult('Unit Tests', 'Running unit tests...');
+            
+            if (typeof runUnitTests !== 'undefined') {
+                // Override console.log to capture test results
+                const originalLog = console.log;
+                const testOutput = [];
+                console.log = (...args) => {
+                    testOutput.push(args.join(' '));
+                    originalLog(...args);
+                };
+                
+                try {
+                    const results = window.runUnitTests();
+                    
+                    // Parse results from captured output
+                    testOutput.forEach(line => {
+                        if (line.includes('✅') || line.includes('❌')) {
+                            const passed = line.includes('✅');
+                            const testName = line.split(':')[0].replace(/[✅❌]/g, '').trim();
+                            addTestResult('Unit', testName, passed, passed ? 'Test passed' : 'Test failed');
+                        }
+                    });
+                    
+                } catch (error) {
+                    addTestResult('Unit', 'Test Execution', false, `Error running tests: ${error.message}`);
+                } finally {
+                    console.log = originalLog;
+                }
+            } else {
+                addTestResult('Unit', 'Test Availability', false, 'Unit test functions not available');
+            }
+        }
+
+        function runIntegrationTests() {
+            addInfoResult('Integration Tests', 'Running integration tests...');
+            
+            if (typeof runIntegrationTests !== 'undefined') {
+                const originalLog = console.log;
+                const testOutput = [];
+                console.log = (...args) => {
+                    testOutput.push(args.join(' '));
+                    originalLog(...args);
+                };
+                
+                try {
+                    const results = window.runIntegrationTests();
+                    
+                    testOutput.forEach(line => {
+                        if (line.includes('✅') || line.includes('❌')) {
+                            const passed = line.includes('✅');
+                            const testName = line.split(':')[0].replace(/[✅❌]/g, '').trim();
+                            addTestResult('Integration', testName, passed, passed ? 'Test passed' : 'Test failed');
+                        }
+                    });
+                    
+                } catch (error) {
+                    addTestResult('Integration', 'Test Execution', false, `Error running tests: ${error.message}`);
+                } finally {
+                    console.log = originalLog;
+                }
+            } else {
+                addTestResult('Integration', 'Test Availability', false, 'Integration test functions not available');
+            }
+        }
+
+        function runE2ETests() {
+            addInfoResult('E2E Tests', 'Running end-to-end tests...');
+            
+            if (typeof runE2ETests !== 'undefined') {
+                const originalLog = console.log;
+                const testOutput = [];
+                console.log = (...args) => {
+                    testOutput.push(args.join(' '));
+                    originalLog(...args);
+                };
+                
+                try {
+                    const results = window.runE2ETests();
+                    
+                    testOutput.forEach(line => {
+                        if (line.includes('✅') || line.includes('❌')) {
+                            const passed = line.includes('✅');
+                            const testName = line.split(':')[0].replace(/[✅❌]/g, '').trim();
+                            addTestResult('E2E', testName, passed, passed ? 'Test passed' : 'Test failed');
+                        } else if (line.includes('📋')) {
+                            const testName = line.split(':')[0].replace('📋', '').trim();
+                            addTestResult('E2E', testName, true, 'Manual test required', 'This test requires manual verification');
+                        }
+                    });
+                    
+                } catch (error) {
+                    addTestResult('E2E', 'Test Execution', false, `Error running tests: ${error.message}`);
+                } finally {
+                    console.log = originalLog;
+                }
+            } else {
+                addTestResult('E2E', 'Test Availability', false, 'E2E test functions not available');
+            }
+        }
+
+        function runAllTests() {
+            clearResults();
+            addInfoResult('Test Runner', 'Starting comprehensive test suite...');
+            
+            setTimeout(() => runUnitTests(), 100);
+            setTimeout(() => runIntegrationTests(), 500);
+            setTimeout(() => runE2ETests(), 1000);
+            
+            setTimeout(() => {
+                addInfoResult('Test Runner', `Test suite completed. ${passedTests}/${totalTests} tests passed.`);
+            }, 1500);
+        }
+
+        function openMainApp() {
+            window.open('http://localhost:8080/cloud-health-map/', '_blank');
+        }
+
+        function openTestAutomation() {
+            window.open('test-automation.html', '_blank');
+        }
+
+        function downloadResults() {
+            const results = {
+                timestamp: new Date().toISOString(),
+                summary: {
+                    total: totalTests,
+                    passed: passedTests,
+                    failed: failedTests,
+                    success_rate: totalTests > 0 ? (passedTests / totalTests * 100).toFixed(2) + '%' : '0%'
+                },
+                tests: allResults
+            };
+            
+            const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `aws-health-map-test-results-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Auto-run tests on page load
+        window.onload = function() {
+            addInfoResult('Test Runner', 'Test runner initialized. Click "Run All Tests" to begin.');
+        };
+    </script>
+</body>
+</html>

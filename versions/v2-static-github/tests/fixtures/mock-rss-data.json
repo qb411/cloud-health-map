@@ -1,0 +1,117 @@
+{
+  "mockRSSResponse": {
+    "lastBuildDate": "2025-01-07T15:00:00Z",
+    "items": [
+      {
+        "title": "Service is operating normally in the US East (N. Virginia) Region",
+        "description": "All services are operating normally in the us-east-1 region.",
+        "pubDate": "Mon, 07 Jan 2025 15:00:00 GMT",
+        "guid": "operational-us-east-1-20250107"
+      },
+      {
+        "title": "Increased error rates for EC2 in the US West (Oregon) Region",
+        "description": "We are investigating increased error rates for EC2 instances in the us-west-2 region.",
+        "pubDate": "Mon, 07 Jan 2025 14:30:00 GMT",
+        "guid": "issue-us-west-2-20250107"
+      },
+      {
+        "title": "Service disruption for RDS in the Europe (Ireland) Region",
+        "description": "We are experiencing a service disruption affecting RDS in the eu-west-1 region.",
+        "pubDate": "Mon, 07 Jan 2025 14:00:00 GMT",
+        "guid": "outage-eu-west-1-20250107"
+      }
+    ]
+  },
+  "mockRegions": [
+    {
+      "code": "us-east-1",
+      "name": "US East (N. Virginia)",
+      "location": [-77.0369, 38.9072],
+      "status": "operational"
+    },
+    {
+      "code": "us-west-2",
+      "name": "US West (Oregon)",
+      "location": [-120.5542, 43.8041],
+      "status": "issue"
+    },
+    {
+      "code": "eu-west-1",
+      "name": "Europe (Ireland)",
+      "location": [-6.2603, 53.3498],
+      "status": "outage"
+    }
+  ],
+  "testScenarios": {
+    "allOperational": {
+      "description": "All regions operating normally (Green)",
+      "simulatedIssues": {},
+      "expectedRefreshRate": 600000,
+      "expectedColors": {
+        "us-east-1": "#10B981",
+        "us-west-2": "#10B981",
+        "eu-west-1": "#10B981"
+      }
+    },
+    "singleIssue": {
+      "description": "One region with service issue (Yellow)",
+      "simulatedIssues": {
+        "us-east-1": "issue"
+      },
+      "expectedRefreshRate": 300000,
+      "expectedColors": {
+        "us-east-1": "#F59E0B",
+        "us-west-2": "#10B981",
+        "eu-west-1": "#10B981"
+      }
+    },
+    "singleOutage": {
+      "description": "One region with service outage (Red)",
+      "simulatedIssues": {
+        "us-east-1": "outage"
+      },
+      "expectedRefreshRate": 300000,
+      "expectedColors": {
+        "us-east-1": "#EF4444",
+        "us-west-2": "#10B981",
+        "eu-west-1": "#10B981"
+      }
+    },
+    "multipleIssues": {
+      "description": "Multiple regions with different issues (Yellow + Red)",
+      "simulatedIssues": {
+        "us-east-1": "issue",
+        "us-west-2": "outage"
+      },
+      "expectedRefreshRate": 300000,
+      "expectedColors": {
+        "us-east-1": "#F59E0B",
+        "us-west-2": "#EF4444",
+        "eu-west-1": "#10B981"
+      }
+    },
+    "statusTransitions": {
+      "description": "Testing status transitions (Green → Yellow → Red)",
+      "steps": [
+        {
+          "step": 1,
+          "simulatedIssues": {},
+          "expectedStatus": "operational",
+          "expectedColor": "#10B981"
+        },
+        {
+          "step": 2,
+          "simulatedIssues": { "us-east-1": "issue" },
+          "expectedStatus": "issue",
+          "expectedColor": "#F59E0B"
+        },
+        {
+          "step": 3,
+          "simulatedIssues": { "us-east-1": "outage" },
+          "expectedStatus": "outage",
+          "expectedColor": "#EF4444"
+        }
+      ]
+    }
+  }
+}

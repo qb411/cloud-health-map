@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Controls Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .pass { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .fail { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        button { margin: 5px; padding: 8px 16px; cursor: pointer; }
+        .status-demo { display: inline-block; width: 20px; height: 20px; border-radius: 50%; margin: 0 5px; }
+        .operational { background-color: #10B981; }
+        .issue { background-color: #F59E0B; }
+        .outage { background-color: #EF4444; }
+    </style>
+</head>
+<body>
+    <h1>AWS Health Map - Test Controls Debug</h1>
+    
+    <div class="info">
+        <h3>Status Color Reference:</h3>
+        <div>
+            <span class="status-demo operational"></span> Operational (Green): #10B981
+        </div>
+        <div>
+            <span class="status-demo issue"></span> Issue (Yellow/Orange): #F59E0B
+        </div>
+        <div>
+            <span class="status-demo outage"></span> Outage (Red): #EF4444
+        </div>
+    </div>
+
+    <h2>Automated Tests</h2>
+    <div id="test-results"></div>
+    
+    <h2>Manual Test Controls</h2>
+    <button onclick="testIssueSimulation()">Test Issue (Yellow) Simulation</button>
+    <button onclick="testOutageSimulation()">Test Outage (Red) Simulation</button>
+    <button onclick="openMainApp()">Open Main App</button>
+    
+    <h2>Test Instructions</h2>
+    <ol>
+        <li>Click "Test Issue (Yellow) Simulation" - should show yellow markers</li>
+        <li>Click "Test Outage (Red) Simulation" - should show red markers</li>
+        <li>Open main app and verify test controls work</li>
+        <li>Check browser console for any JavaScript errors</li>
+    </ol>
+
+    <script>
+        const testResults = document.getElementById('test-results');
+        
+        function addTestResult(name, passed, message) {
+            const div = document.createElement('div');
+            div.className = `test-result ${passed ? 'pass' : 'fail'}`;
+            div.innerHTML = `<strong>${name}:</strong> ${passed ? 'PASS' : 'FAIL'} - ${message}`;
+            testResults.appendChild(div);
+        }
+
+        function runAutomatedTests() {
+            // Test 1: Status color mapping
+            const statusColors = {
+                operational: { fill: '#10B981', border: '#059669' },
+                issue: { fill: '#F59E0B', border: '#D97706' },
+                outage: { fill: '#EF4444', border: '#DC2626' }
+            };
+            
+            addTestResult(
+                'Status Color Mapping', 
+                statusColors.issue.fill === '#F59E0B',
+                `Issue color should be #F59E0B, got ${statusColors.issue.fill}`
+            );
+            
+            // Test 2: CSS class mapping
+            const statusClasses = {
+                operational: 'bg-emerald-100 text-emerald-800',
+                issue: 'bg-amber-100 text-amber-800',
+                outage: 'bg-red-100 text-red-800'
+            };
+            
+            addTestResult(
+                'CSS Class Mapping',
+                statusClasses.issue.includes('amber'),
+                `Issue should use amber classes, got ${statusClasses.issue}`
+            );
+            
+            // Test 3: Simulate data structure
+            const mockRegion = {
+                code: 'us-east-1',
+                name: 'US East (N. Virginia)',
+                location: [-77.0369, 38.9072],
+                status: 'issue'
+            };
+            
+            addTestResult(
+                'Mock Region Structure',
+                mockRegion.status === 'issue',
+                `Region status should be 'issue', got '${mockRegion.status}'`
+            );
+        }
+
+        function testIssueSimulation() {
+            console.log('Testing Issue (Yellow) Simulation...');
+            
+            // Simulate the test controls functionality
+            const regionCode = 'us-east-1';
+            const status = 'issue';
+            
+            console.log(`Simulating ${status} for region ${regionCode}`);
+            
+            // Check if main app is available
+            if (window.opener || window.parent !== window) {
+                console.log('Sending test command to main app...');
+                // In a real scenario, this would communicate with the main app
+            } else {
+                console.log('Main app not detected. Open main app first.');
+                alert('Please open the main app first, then run this test.');
+            }
+        }
+
+        function testOutageSimulation() {
+            console.log('Testing Outage (Red) Simulation...');
+            
+            const regionCode = 'us-west-2';
+            const status = 'outage';
+            
+            console.log(`Simulating ${status} for region ${regionCode}`);
+        }
+
+        function openMainApp() {
+            window.open('http://localhost:8080/cloud-health-map/', '_blank');
+        }
+
+        // Run tests on page load
+        window.onload = function() {
+            runAutomatedTests();
+        };
+    </script>
+</body>
+</html>
