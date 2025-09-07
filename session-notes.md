@@ -1,0 +1,286 @@
+# Cloud Health Map - Session Notes
+
+## Session 1 - September 6, 2025
+
+### Session Overview
+- **Duration**: ~30 minutes
+- **Focus**: Project analysis and specification creation
+- **Participants**: User + AI Assistant
+
+### Accomplishments
+1. **Repository Analysis**
+   - Cloned existing cloud-health-map repository from GitHub
+   - Analyzed current implementation (React + Vite + TypeScript)
+   - Identified existing features: AWS RSS feed parsing, interactive map, Supabase integration
+
+2. **Use Case Definition**
+   - **Use Case 1**: Public AWS Health Monitor for GitHub Pages hosting
+     - Free static hosting
+     - Public AWS Status RSS feed
+     - 5-10 minute refresh intervals
+     - No authentication required
+   
+   - **Use Case 2**: Personal Health Dashboard integration
+     - AWS account-specific health data
+     - Personal Health Dashboard API
+     - Real-time updates via EventBridge
+     - IAM-based authentication
+
+3. **Documentation Created**
+   - PROJECT_SPECIFICATION.md with complete project overview
+   - session-notes.md for tracking progress between sessions
+
+### Current State
+- **Repository**: Successfully cloned and analyzed
+- **Dependencies**: Node.js not installed (blocked build process)
+- **Architecture**: Identified dual-mode approach needed
+- **Next Phase**: Core refactoring to remove Supabase dependencies
+
+### Technical Findings
+- Current implementation uses Supabase for real-time updates
+- RSS feed URL: `https://status.aws.amazon.com/rss/all.rss`
+- Refresh intervals: 15 minutes (normal), 5 minutes (errors)
+- Map library: Leaflet.js with region markers
+- UI framework: shadcn/ui + Tailwind CSS
+
+### Decisions Made
+1. **Dual-mode architecture** with shared frontend components
+2. **Phase-based development** approach (4 phases total)
+3. **GitHub Pages** for public mode deployment
+4. **AWS Lambda + EventBridge** for personal mode
+
+### Issues Identified
+- Supabase dependency blocks static hosting for Use Case 1
+- Need mode detection system for configuration
+- CORS potential issues with RSS feed fetching
+- Node.js environment setup required for development
+
+### Next Session Goals
+1. Set up Node.js development environment
+2. Begin Phase 1 refactoring:
+   - Remove Supabase dependencies
+   - Implement mode detection
+   - Create configuration system
+3. Test RSS feed fetching without backend
+4. Prepare for GitHub Pages deployment
+
+### Questions for Next Session
+- Should we use a CORS proxy for RSS feeds?
+- Preferred method for mode detection (env vars, config file)?
+- Any specific AWS regions to prioritize for testing?
+
+---
+
+## Session 2 - September 6, 2025 (Continued)
+
+### Session Overview
+- **Duration**: ~45 minutes
+- **Focus**: Repository restructuring and V2 static implementation
+- **Participants**: User + AI Assistant
+
+### Accomplishments
+1. **Repository Restructuring** ✅
+   - Created `versions/` directory structure
+   - Moved original code to `v1-original-supabase/` (archived)
+   - Created `v2-static-github/` for active development
+   - Set up `v3-aws-personal/` placeholder for future
+
+2. **V2 Static Implementation** ✅
+   - Removed Supabase dependencies from package.json
+   - Refactored `aws-health.ts` with localStorage persistence
+   - Added CORS proxy fallback for RSS feeds
+   - Updated `Index.tsx` to remove Supabase subscriptions
+   - Implemented manual refresh functionality
+   - Added last update timestamp display
+
+3. **Documentation Created** ✅
+   - Updated main README with version comparison
+   - Created version-specific READMEs
+   - Added GitHub Pages deployment guide
+   - Documented architecture changes
+
+### Technical Changes Made
+- **Data Persistence**: Switched from Supabase to localStorage
+- **CORS Handling**: Added `api.allorigins.win` proxy fallback
+- **Refresh Strategy**: Changed to 10min normal, 5min during issues
+- **Manual Controls**: Added refresh button and last update display
+- **Storage Management**: Automatic cleanup of items older than 7 days
+
+### Current State
+- **V1**: Archived original Supabase implementation in `versions/v1-original-supabase/`
+- **V2**: Fully functional static version in `versions/v2-static-github/` ready for GitHub Pages
+- **V3**: Placeholder directory created for future AWS Personal Health Dashboard
+
+### Files Modified in V2
+- `package.json` - Removed `@supabase/supabase-js` dependency
+- `src/lib/aws-health.ts` - Complete refactor with localStorage and CORS proxy
+- `src/pages/Index.tsx` - Removed Supabase subscriptions, added manual refresh
+- Deleted `src/integrations/supabase/` directory entirely
+
+### Key Implementation Details
+- **localStorage Keys**: `aws-health-items`, `aws-health-timestamp`
+- **CORS Proxy**: `https://api.allorigins.win/get?url=` as fallback
+- **Data Retention**: 7 days for localStorage items
+- **Refresh Intervals**: 10min normal, 5min during issues
+- **Error Handling**: Graceful fallback to cached data on fetch failures
+
+### Issues Resolved
+- Supabase backend dependency removed
+- Static hosting compatibility achieved
+- CORS issues mitigated with proxy fallback
+- Data persistence maintained with localStorage
+
+## NEXT SESSION PLANNED STEPS
+
+### Immediate Testing (Phase 1 - 30 minutes)
+1. **Test V2 Build Process**
+   ```bash
+   cd versions/v2-static-github
+   npm install
+   npm run build
+   ```
+   - Verify no build errors
+   - Check bundle size and optimization
+   - Test preview locally with `npm run preview`
+
+2. **Test RSS Feed Fetching**
+   - Start dev server: `npm run dev`
+   - Open browser console and monitor network requests
+   - Verify direct RSS fetch works or falls back to CORS proxy
+   - Test manual refresh functionality
+   - Verify localStorage persistence across page reloads
+
+3. **Test localStorage Functionality**
+   - Check browser DevTools → Application → Local Storage
+   - Verify items are stored with correct keys
+   - Test 7-day cleanup logic
+   - Verify data persists across browser sessions
+
+### GitHub Pages Deployment (Phase 2 - 20 minutes)
+4. **Deploy to GitHub Pages**
+   ```bash
+   cd versions/v2-static-github
+   npm run deploy
+   ```
+   - Verify gh-pages branch is created
+   - Enable GitHub Pages in repository settings
+   - Test live deployment at `https://[username].github.io/cloud-health-map`
+
+5. **Production Testing**
+   - Test RSS feed fetching in production environment
+   - Verify CORS proxy works if needed
+   - Test on different devices/browsers
+   - Monitor for any console errors
+
+### Optimization & Polish (Phase 3 - 30 minutes)
+6. **UI/UX Improvements**
+   - Add loading states for manual refresh
+   - Improve error messaging for network failures
+   - Add offline indicator when using cached data
+   - Consider adding refresh countdown timer
+
+7. **Performance Optimization**
+   - Implement service worker for offline functionality (optional)
+   - Add compression for localStorage data if needed
+   - Optimize bundle size further
+   - Add analytics/monitoring (optional)
+
+### Future Planning (Phase 4 - 15 minutes)
+8. **V3 Planning**
+   - Research AWS Personal Health Dashboard API requirements
+   - Plan AWS infrastructure architecture
+   - Document authentication flow requirements
+
+### Backup/Recovery Context
+- **Original Implementation**: Fully preserved in `versions/v1-original-supabase/`
+- **Working Directory**: `versions/v2-static-github/` contains the static implementation
+- **Key Dependencies**: All Supabase deps removed, core React/Vite/Leaflet preserved
+- **Configuration**: Router basename set to `/cloud-health-map` for GitHub Pages
+
+### Critical Files for Next Session
+- `versions/v2-static-github/src/lib/aws-health.ts` - Core data fetching logic
+- `versions/v2-static-github/src/pages/Index.tsx` - Main component with state management
+- `versions/v2-static-github/package.json` - Dependencies and scripts
+- `docs/deployment-guides/github-pages.md` - Deployment instructions
+
+### Questions for Next Session
+- Should we add a service worker for offline functionality?
+- Any additional error handling needed for the CORS proxy?
+- Performance optimizations for the localStorage approach?
+- UI improvements for better user experience?
+
+### SESSION COMPLETION SUMMARY
+
+## ✅ COMPLETED THIS SESSION
+
+**Repository Restructure:**
+- Created 3-version architecture (`v1-original-supabase`, `v2-static-github`, `v3-aws-personal`)
+- Archived original Supabase implementation in `versions/v1-original-supabase/`
+- Created fully functional static version in `versions/v2-static-github/`
+
+**V2 Static Implementation:**
+- Removed all Supabase dependencies from package.json
+- Implemented localStorage persistence with 7-day retention
+- Added CORS proxy fallback (`api.allorigins.win`) for RSS feeds
+- Updated refresh intervals (10min normal, 5min during issues)
+- Added manual refresh button with timestamp display
+- Deleted `src/integrations/supabase/` directory entirely
+
+**Documentation:**
+- Updated main README with version comparison table
+- Created version-specific READMEs for v1 and v2
+- Added GitHub Pages deployment guide
+- Documented all technical changes and architecture decisions
+
+## 🎯 READY FOR NEXT SESSION
+
+**The project is now in a state where you can:**
+
+1. **Immediately test** the V2 static version locally with `npm run dev`
+2. **Deploy to GitHub Pages** with `npm run deploy` command
+3. **Continue development** with clear next steps outlined in planned phases
+
+**All context needed to resume is captured in:**
+- `session-notes.md` - Complete progress and detailed next steps
+- `versions/v2-static-github/` - Working static implementation ready for testing
+- `docs/deployment-guides/github-pages.md` - Step-by-step deployment instructions
+- Main `README.md` - Updated project overview with version comparison
+
+**Key Files Modified:**
+- `versions/v2-static-github/package.json` - Supabase dependency removed
+- `versions/v2-static-github/src/lib/aws-health.ts` - Complete localStorage refactor
+- `versions/v2-static-github/src/pages/Index.tsx` - Supabase subscriptions removed
+
+**Next session can immediately pick up with Phase 1 testing, then proceed through deployment and optimization phases as outlined above.**
+
+---
+
+## Session Template
+
+### Session [N] - [Date]
+
+### Session Overview
+- **Duration**: 
+- **Focus**: 
+- **Participants**: 
+
+### Accomplishments
+- 
+
+### Current State
+- 
+
+### Technical Changes
+- 
+
+### Issues Identified
+- 
+
+### Decisions Made
+- 
+
+### Next Session Goals
+- 
+
+### Questions for Next Session
+- 

@@ -1,73 +1,79 @@
-
 # AWS Global Health Status Monitor
 
-A real-time dashboard that visualizes the operational status of AWS regions worldwide. This project provides an interactive map interface to monitor AWS service health across different geographical locations.
+A real-time dashboard that visualizes the operational status of AWS regions worldwide through multiple implementation approaches.
 
-## Features
+## Project Versions
 
-- 🗺️ Interactive global map showing all AWS regions
-- 🚦 Real-time status monitoring of AWS services
-- 🎯 Region-specific status indicators
-- 🔄 Auto-refreshing data (updates every minute)
-- 🌍 Country flag indicators for each region
+This repository contains three different implementations of the AWS health monitoring system:
 
-## Tech Stack
+### 🗂️ [V1 - Original Supabase](./versions/v1-original-supabase/)
+**Status**: Archived
+- Real-time updates via Supabase
+- Database storage of events
+- Requires backend infrastructure
+- **Use Case**: Reference implementation
 
-- React + TypeScript
-- Vite for build tooling
-- Tailwind CSS for styling
-- shadcn/ui for UI components
-- Leaflet.js for interactive maps
-- AWS Status RSS feed integration
+### 🚀 [V2 - Static GitHub Pages](./versions/v2-static-github/) 
+**Status**: Active Development
+- Completely static deployment
+- localStorage for data persistence
+- Zero hosting costs
+- **Use Case**: Public AWS health monitoring
 
-## Getting Started
+### 🔮 [V3 - AWS Personal Health Dashboard](./versions/v3-aws-personal/)
+**Status**: Future Development
+- AWS Personal Health Dashboard API
+- Account-specific health data
+- Lambda + EventBridge architecture
+- **Use Case**: Personal AWS account monitoring
 
-### Prerequisites
+## Quick Start
 
-- Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Choose your preferred version:
 
-### Installation
-
-```sh
-# Clone the repository
-git clone <your-repo-url>
-
-# Navigate to project directory
-cd aws-health-monitor
-
-# Install dependencies
+```bash
+# For static GitHub Pages version (recommended for public use)
+cd versions/v2-static-github
 npm install
+npm run dev
 
-# Start the development server
+# For original Supabase version (archived)
+cd versions/v1-original-supabase
+npm install
 npm run dev
 ```
 
-## Usage
+## Features Comparison
 
-The application will fetch AWS health status data automatically when launched. The map displays interactive markers for each AWS region:
+| Feature | V1 (Supabase) | V2 (Static) | V3 (AWS Personal) |
+|---------|---------------|-------------|-------------------|
+| Hosting Cost | Supabase limits | Free forever | AWS usage costs |
+| Real-time Updates | ✅ | Manual/Interval | ✅ |
+| Data Persistence | Database | localStorage | Database |
+| Account-specific | ❌ | ❌ | ✅ |
+| Setup Complexity | Medium | Low | High |
+| Deployment | Complex | GitHub Pages | AWS Infrastructure |
 
-- Green markers indicate operational status
-- Yellow markers indicate service issues
-- Red markers indicate outages
+## Documentation
 
-Click on any marker to see detailed information about that region, including:
-- Region name with country flag
-- AWS region code
-- Current operational status
+- [Project Specification](./PROJECT_SPECIFICATION.md) - Complete project overview
+- [Session Notes](./session-notes.md) - Development progress tracking
+- [Deployment Guides](./docs/deployment-guides/) - Version-specific deployment instructions
 
-## Data Updates
+## Current Focus
 
-The dashboard automatically refreshes its data every 60 seconds to ensure you have the most current AWS health status information.
+**V2 (Static GitHub Pages)** is the current development focus, providing:
+- 🆓 Free hosting on GitHub Pages
+- 🔄 5-10 minute refresh intervals
+- 💾 localStorage data persistence
+- 🌐 CORS-handled RSS feed fetching
+- 🗺️ Interactive global map
+- 📊 Real-time status visualization
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Each version is independently maintained. See the README in each version directory for specific setup and contribution guidelines.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- Data provided by AWS Service Health Dashboard RSS Feed
-- Map data © OpenStreetMap contributors
+MIT License - see LICENSE file for details.
