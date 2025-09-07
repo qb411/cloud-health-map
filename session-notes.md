@@ -209,6 +209,102 @@
 - Performance optimizations for the localStorage approach?
 - UI improvements for better user experience?
 
+---
+
+## Session 3 - September 6, 2025 (Continued)
+
+### Session Overview
+- **Duration**: ~45 minutes
+- **Focus**: UI improvements and development workflow optimization
+- **Participants**: User + AI Assistant
+
+### Accomplishments
+1. **Development Environment Setup** ✅
+   - Installed Node.js via NVM in isolated environment
+   - Set up Vite development server for V2 static version
+   - Established reliable testing workflow
+
+2. **Git Repository Management** ✅
+   - Configured git credentials (qb411, sean.falconer@gmail.com)
+   - Successfully committed and pushed 3-version restructure to main branch
+   - Created `feature/ui-improvements` branch for ongoing UI work
+
+3. **UI Improvements - Popup Design** ✅
+   - Updated popup styling from orange to clean white background
+   - Added AWS-branded orange header with "AWS Region" text
+   - Implemented status indicators with colored dots
+   - Replaced problematic flag emojis with reliable flagcdn.com images
+   - Clean, professional popup design with proper spacing
+
+### Technical Changes Made
+- **Popup Styling**: White background, AWS orange header, modern shadows
+- **Flag Display**: Switched from emojis to flagcdn.com service (16x12px images)
+- **Status Indicators**: Added colored dots next to status text
+- **Typography**: Improved spacing and hierarchy in popups
+
+### Development Workflow Established
+
+#### **STANDARD PROCESS FOR TESTING CODE UPDATES**
+
+**Step 1: Kill All Vite Servers**
+```bash
+pkill -f node && sleep 2
+```
+
+**Step 2: Start Fresh Server on Port 8080**
+```bash
+export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && cd /mnt/c/CODE/cloud-health-map/versions/v2-static-github && nohup npm run dev -- --force --port 8080 > vite.log 2>&1 &
+```
+
+**Step 3: Verify Server Status**
+```bash
+cd /mnt/c/CODE/cloud-health-map/versions/v2-static-github && sleep 3 && tail -5 vite.log
+```
+
+**Step 4: Test Changes**
+- Access: http://localhost:8080/cloud-health-map/
+- Hard refresh browser (Ctrl+F5) to clear cache
+- Test functionality
+
+**Why This Process is Needed:**
+- WSL file system can have caching issues with Vite hot reload
+- Multiple server instances can run on different ports
+- Force flag clears Vite cache
+- Consistent port 8080 usage for testing
+
+### Current State
+- **Main Branch**: Contains complete 3-version restructure
+- **Feature Branch**: `feature/ui-improvements` with updated popup design
+- **Dev Server**: Running on http://localhost:8080/cloud-health-map/
+- **UI Status**: Clean white popups with AWS branding and flag images
+
+### Issues Resolved
+- Vite server caching and hot reload problems
+- Multiple server instances on different ports
+- Flag emoji display inconsistencies across browsers
+- Popup styling and branding improvements
+
+### Next Session Goals
+1. **Test Current UI Changes**
+   - Verify flag images display correctly
+   - Test popup functionality across different regions
+   - Confirm status indicators work properly
+
+2. **Additional UI Improvements** (if needed)
+   - Loading states for manual refresh
+   - Error handling improvements
+   - Mobile responsiveness testing
+
+3. **Deployment Testing**
+   - Build and test static deployment
+   - GitHub Pages deployment verification
+
+### Questions for Next Session
+- Should we add a service worker for offline functionality?
+- Any additional error handling needed for the CORS proxy?
+- Performance optimizations for the localStorage approach?
+- Additional UI improvements needed?
+
 ### SESSION COMPLETION SUMMARY
 
 ## ✅ COMPLETED THIS SESSION
