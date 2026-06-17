@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -6,12 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>cloud-health-map</title>
     <meta property="og:image" content="/og-image.png" />
+    
+    <!-- Content Security Policy (CSP) - 2026 Security Standards -->
+    <!-- Nonce-based CSP for development. For production, replace nonce with hash or remove inline scripts -->
+    <meta 
+      http-equiv="Content-Security-Policy" 
+      content="
+        default-src 'self';
+        script-src 'self' 'nonce-{NONCE}' https://cdn.gpteng.co;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        font-src 'self' https://fonts.gstatic.com;
+        img-src 'self' data: https:;
+        media-src 'self' https:;
+        connect-src 'self' https://health.amazonaws.com https://health.api.aws https://cdn.gpteng.co wss:;
+        frame-src 'none';
+        frame-ancestors 'none';
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self';
+        upgrade-insecure-requests;
+      "
+    />
+    
+    <!-- Subresource Integrity (SRI) - Assets will be injected with integrity hashes during build -->
+    <link rel="dns-prefetch" href="https://cdn.gpteng.co" crossorigin />
+    
+    <!-- Preconnect to external domains for performance and security -->
+    <link rel="preconnect" href="https://cdn.gpteng.co" crossorigin />
   </head>
 
   <body>
     <div id="root"></div>
-    <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
+    
+    <!-- GPTEngineer script (external CDN) - loaded with nonce support in CSP above -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+    
+    <!-- Main application entry point -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

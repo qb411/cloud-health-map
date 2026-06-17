@@ -12,6 +12,9 @@
     "moduleDetection": "force",
     "noEmit": true,
 
+    /* Node.js types for vite.config.ts */
+    "types": ["node"],
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": false,
