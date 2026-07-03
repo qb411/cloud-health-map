@@ -1,0 +1,32 @@
+# Local Development Requirements for AWS Health Map V1
+# All dependencies needed to build and run the solution locally
+# Install with: pip install -r scripts/local-requirements.txt
+
+# Core Python dependencies
+requests>=2.31.0
+python-dotenv>=1.0.0
+python-dateutil>=2.8.2
+pydantic>=2.0.0
+
+# Testing framework
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
+# Database and Supabase
+psycopg2-binary>=2.9.7
+supabase>=2.0.0
+
+# RSS and web processing
+feedparser>=6.0.10
+beautifulsoup4>=4.12.0
+
+# Local Supabase development
+supabase-cli>=1.0.0
+
+# Development tools
+black>=23.0.0
+flake8>=6.0.0
+
+# Build and deployment tools
+build>=0.10.0
+wheel>=0.41.0

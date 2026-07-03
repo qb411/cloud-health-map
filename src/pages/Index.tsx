@@ -1,16 +1,14 @@
-
 import { useEffect, useState, useCallback } from "react";
 import RegionMap from "@/components/RegionMap";
 import RegionSummary from "@/components/RegionSummary";
 import StatusLog from "@/components/StatusLog";
 import TestControls from "@/components/TestControls";
-import { fetchAWSHealth } from "@/lib/aws-health";
+import { fetchAWSHealth, getLastUpdateTime } from "@/lib/aws-health";
 import { useToast } from "@/hooks/use-toast";
 import type { AWSRegion } from "@/lib/aws-regions";
 import type { RSSItem } from "@/lib/aws-health";
-import { supabase } from "@/integrations/supabase/client";
 
-const NORMAL_REFRESH_RATE = 15 * 60 * 1000; // 15 minutes in milliseconds
+const NORMAL_REFRESH_RATE = 10 * 60 * 1000; // 10 minutes in milliseconds
 const ERROR_REFRESH_RATE = 5 * 60 * 1000;   // 5 minutes in milliseconds
 
 const Index = () => {
@@ -21,49 +19,35 @@ const Index = () => {
   const [simulatedItems, setSimulatedItems] = useState<RSSItem[]>([]);
   const [refreshInterval, setRefreshInterval] = useState(NORMAL_REFRESH_RATE);
   const [lastBuildDate, setLastBuildDate] = useState<string | null>(null);
+  const [lastUpdateTime, setLastUpdateTime] = useState<string | null>(null);
   const [simulatedIssues, setSimulatedIssues] = useState<Record<string, "issue" | "outage">>({});
-
-  // Subscribe to real-time updates
-  useEffect(() => {
-    const channel = supabase
-      .channel('aws-health-events')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'aws_health_events' 
-        }, 
-        () => {
-          // Refresh data when we receive updates
-          updateHealth();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
 
   const checkForErrors = useCallback((data: AWSRegion[]) => {
     return data.some(region => region.status === 'issue' || region.status === 'outage');
   }, []);
 
-  const updateHealth = useCallback(async () => {
+  const updateHealth = useCallback(async (customSimulatedIssues?: Record<string, "issue" | "outage">) => {
     try {
       const data = await fetchAWSHealth();
       if (data) {
+        // Use custom simulated issues if provided, otherwise use state
+        const currentSimulatedIssues = customSimulatedIssues || simulatedIssues;
+        
         // Apply simulated issues over the fetched data
         const updatedRegions = data.regions.map(region => ({
           ...region,
-          status: simulatedIssues[region.code] || region.status
+          status: currentSimulatedIssues[region.code] || region.status
         }));
+        
+        console.log('Applied simulated issues:', currentSimulatedIssues);
+        console.log('Updated regions:', updatedRegions.filter(r => r.status !== 'operational'));
         
         setHealthData(updatedRegions);
         
-        // Combine simulated items with database items
+        // Combine simulated items with fetched items
         setRecentItems([...simulatedItems, ...data.recentItems]);
         setLastBuildDate(data.lastBuildDate);
+        setLastUpdateTime(getLastUpdateTime());
         
         // Adjust refresh rate based on health status
         const hasErrors = checkForErrors(updatedRegions);
@@ -77,11 +61,18 @@ const Index = () => {
         description: "Failed to fetch AWS health status",
         variant: "destructive",
       });
+      setLoading(false);
     }
   }, [toast, checkForErrors, simulatedIssues, simulatedItems]);
 
   const handleSimulateIssue = useCallback((regionCode: string, status: "issue" | "outage") => {
-    setSimulatedIssues(prev => ({ ...prev, [regionCode]: status }));
+    console.log(`Simulating ${status} for region ${regionCode}`);
+    
+    // Create new simulated issues object
+    const newSimulatedIssues = { ...simulatedIssues, [regionCode]: status };
+    
+    // Update state
+    setSimulatedIssues(newSimulatedIssues);
     
     // Get the region name from healthData
     const region = healthData.find(r => r.code === regionCode);
@@ -104,15 +95,26 @@ const Index = () => {
       description: `Simulated ${status} for ${regionCode}`,
     });
 
-    // Force an immediate health check
+    // Force an immediate health check with the new simulated issues
+    updateHealth(newSimulatedIssues);
+  }, [toast, updateHealth, healthData, simulatedIssues]);
+
+  const handleManualRefresh = useCallback(() => {
+    setLoading(true);
     updateHealth();
-  }, [toast, updateHealth, healthData]);
+  }, [updateHealth]);
 
   useEffect(() => {
     updateHealth();
     const interval = setInterval(updateHealth, refreshInterval);
     return () => clearInterval(interval);
   }, [refreshInterval, updateHealth]);
+
+  const formatLastUpdate = (timestamp: string | null) => {
+    if (!timestamp) return "Never";
+    const date = new Date(timestamp);
+    return date.toLocaleString();
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -136,10 +138,22 @@ const Index = () => {
             </div>
           </div>
           <div className="mt-1 text-sm text-gray-500 space-y-1">
-            <p>Status updates every 15 minutes under normal conditions</p>
+            <p>Status updates every 10 minutes under normal conditions</p>
             <p className="text-xs text-gray-400">
               * Scanning frequency automatically increases to every 5 minutes when issues or outages are detected
             </p>
+            <div className="flex justify-center items-center gap-4 mt-2">
+              <p className="text-xs text-gray-400">
+                Last update: {formatLastUpdate(lastUpdateTime)}
+              </p>
+              <button
+                onClick={handleManualRefresh}
+                disabled={loading}
+                className="text-xs text-blue-600 hover:text-blue-800 disabled:text-gray-400"
+              >
+                {loading ? "Refreshing..." : "Refresh now"}
+              </button>
+            </div>
           </div>
         </div>
         
