@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { type AWSRegion } from "@/lib/aws-regions";
+import type { RegionStatus } from "@/lib/cloud-health";
 import { Card } from "@/components/ui/card";
 
 // Helper function to get country flag image
@@ -78,7 +78,7 @@ const getStatusTextColor = (status: "operational" | "issue" | "outage") => {
 };
 
 interface RegionMapProps {
-  regions: AWSRegion[];
+  regions: RegionStatus[];
 }
 
 const RegionMap = ({ regions }: RegionMapProps) => {
@@ -176,9 +176,16 @@ const RegionMap = ({ regions }: RegionMapProps) => {
       }).addTo(map.current!);
 
       // Add popup with region info
+      const providerName = region.provider?.toUpperCase() || 'AWS';
+      const headerGradient = region.provider === 'azure'
+        ? 'linear-gradient(135deg, #0078d4 0%, #00bcf2 100%)'
+        : region.provider === 'gcp'
+        ? 'linear-gradient(135deg, #4285f4 0%, #34a853 50%, #fbbc04 75%, #ea4335 100%)'
+        : 'linear-gradient(135deg, #ff9900 0%, #ff7700 100%)';
+
       marker.bindPopup(`
-        <div class="aws-popup-header">
-          <span>AWS Region</span>
+        <div class="aws-popup-header" style="background: ${headerGradient};">
+          <span>${providerName} Region</span>
         </div>
         <div class="aws-popup-body">
           <h3 class="font-semibold text-gray-900 leading-tight" style="margin: 0;">${getCountryFlag(region.name)}${region.name}</h3>

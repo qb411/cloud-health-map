@@ -1,10 +1,10 @@
 
 import { Card } from "@/components/ui/card";
-import { type AWSRegion } from "@/lib/aws-regions";
+import type { RegionStatus } from "@/lib/cloud-health";
 import { CheckCircle, AlertTriangle, XCircle } from "lucide-react";
 
 interface RegionSummaryProps {
-  regions: AWSRegion[];
+  regions: RegionStatus[];
 }
 
 const RegionSummary = ({ regions }: RegionSummaryProps) => {
