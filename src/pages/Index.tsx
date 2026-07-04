@@ -4,9 +4,12 @@ import RegionSummary from "@/components/RegionSummary";
 import StatusLog from "@/components/StatusLog";
 import TestControls from "@/components/TestControls";
 import { fetchAWSHealth, getLastUpdateTime as getAWSLastUpdateTime } from "@/lib/aws-health";
+import { awsRegions } from "@/lib/aws-regions";
 import {
   fetchAzureHealth,
   fetchGCPHealth,
+  AZURE_REGIONS,
+  GCP_REGIONS,
   type RegionStatus,
   type RSSItem,
   type CloudProvider,
@@ -18,10 +21,10 @@ import { upsertEvents, getRecentEvents, subscribeToEvents } from "@/lib/event-st
 import { isSupabaseConfigured } from "@/lib/supabase-client";
 import { useToast } from "@/hooks/use-toast";
 
-const NORMAL_REFRESH_RATE = 10 * 60 * 1000; // 10 minutes
-const ERROR_REFRESH_RATE = 5 * 60 * 1000;   //  5 minutes when issues detected
+const NORMAL_REFRESH_RATE = 10 * 60 * 1000;
+const ERROR_REFRESH_RATE  =  5 * 60 * 1000;
 
-// ─── Provider meta ─────────────────────────────────────────────────────────
+// ─── Provider meta ────────────────────────────────────────────────────────────
 
 const PROVIDER_META: Record<
   CloudProvider,
@@ -47,6 +50,35 @@ const PROVIDER_META: Record<
   },
 };
 
+/**
+ * Return all known regions for a provider as operational.
+ * Used to populate the map immediately — before the fetch completes.
+ */
+function getDefaultRegions(provider: CloudProvider): RegionStatus[] {
+  switch (provider) {
+    case "aws":
+      return awsRegions.map((r) => ({
+        code: r.code,
+        name: r.name,
+        status: "operational",
+        provider: "aws",
+        location: r.location,
+      }));
+    case "azure":
+      return AZURE_REGIONS.map((r) => ({
+        ...r,
+        status: "operational",
+        provider: "azure",
+      }));
+    case "gcp":
+      return GCP_REGIONS.map((r) => ({
+        ...r,
+        status: "operational",
+        provider: "gcp",
+      }));
+  }
+}
+
 const getLastUpdateTime = (provider: CloudProvider): string | null => {
   switch (provider) {
     case "aws":   return getAWSLastUpdateTime();
@@ -60,8 +92,13 @@ const getLastUpdateTime = (provider: CloudProvider): string | null => {
 const Index = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<CloudProvider>("aws");
-  const [healthData, setHealthData] = useState<RegionStatus[]>([]);
+
+  // Seed with all regions immediately so map/TestControls work from first render
+  const [healthData, setHealthData] = useState<RegionStatus[]>(
+    () => getDefaultRegions("aws")
+  );
   const [recentItems, setRecentItems] = useState<RSSItem[]>([]);
   const [simulatedItems, setSimulatedItems] = useState<RSSItem[]>([]);
   const [refreshInterval, setRefreshInterval] = useState(NORMAL_REFRESH_RATE);
@@ -71,36 +108,51 @@ const Index = () => {
     Record<string, "issue" | "outage">
   >({});
 
-  // Keep a ref to simulatedIssues so callbacks always see the latest value
-  // without needing it in their dependency arrays
   const simulatedIssuesRef = useRef(simulatedIssues);
   simulatedIssuesRef.current = simulatedIssues;
 
-  const checkForErrors = useCallback((data: RegionStatus[]) =>
-    data.some((r) => r.status === "issue" || r.status === "outage"),
-  []);
+  const checkForErrors = useCallback(
+    (data: RegionStatus[]) =>
+      data.some((r) => r.status === "issue" || r.status === "outage"),
+    []
+  );
+
+  const applySimulations = useCallback(
+    (
+      regions: RegionStatus[],
+      issues: Record<string, "issue" | "outage">,
+      provider: CloudProvider
+    ): RegionStatus[] =>
+      regions.map((r) => ({
+        ...r,
+        status: issues[r.code] ?? r.status,
+        provider,
+      })),
+    []
+  );
 
   const updateHealth = useCallback(
     async (
       provider: CloudProvider = selectedProvider,
       overrideIssues?: Record<string, "issue" | "outage">
     ) => {
+      setFetchError(false);
       try {
         let data: CloudHealthResult | null = null;
 
         if (provider === "aws") {
-          const awsRaw = await fetchAWSHealth();
-          if (awsRaw) {
+          const raw = await fetchAWSHealth();
+          if (raw) {
             data = {
-              regions: awsRaw.regions.map((r) => ({
+              regions: raw.regions.map((r) => ({
                 code: r.code,
                 name: r.name,
                 status: r.status,
                 provider: "aws" as CloudProvider,
                 location: r.location,
               })),
-              recentItems: awsRaw.recentItems as RSSItem[],
-              lastBuildDate: awsRaw.lastBuildDate,
+              recentItems: raw.recentItems as RSSItem[],
+              lastBuildDate: raw.lastBuildDate,
             };
           }
         } else if (provider === "azure") {
@@ -109,50 +161,49 @@ const Index = () => {
           data = await fetchGCPHealth();
         }
 
-        if (!data) return;
-
-        // Persist new events to Supabase (non-blocking)
-        upsertEvents(data.recentItems as RSSItem[]).catch(() => {});
-
-        // Merge Supabase historical events with fresh feed items
-        const supabaseItems = await getRecentEvents(provider, 7, 100);
-        const merged = mergeRSSItems(data.recentItems as RSSItem[], supabaseItems);
-
         const currentIssues = overrideIssues ?? simulatedIssuesRef.current;
 
-        const updatedRegions: RegionStatus[] = data.regions.map((region) => ({
-          code: region.code,
-          name: region.name,
-          status: currentIssues[region.code] ?? region.status,
-          provider,
-          location: (region as RegionStatus).location,
-        }));
+        if (data) {
+          // Persist to Supabase (fire-and-forget)
+          upsertEvents(data.recentItems as RSSItem[]).catch(() => {});
 
-        setHealthData(updatedRegions);
-        setRecentItems([...simulatedItems, ...merged]);
-        setLastBuildDate(data.lastBuildDate);
-        setLastUpdateTime(getLastUpdateTime(provider));
-        setRefreshInterval(
-          checkForErrors(updatedRegions) ? ERROR_REFRESH_RATE : NORMAL_REFRESH_RATE
-        );
+          // Merge Supabase historical events with fresh feed
+          const supabaseItems = await getRecentEvents(provider, 7, 100);
+          const merged = mergeRSSItems(data.recentItems as RSSItem[], supabaseItems);
+
+          const updatedRegions = applySimulations(data.regions, currentIssues, provider);
+          setHealthData(updatedRegions);
+          setRecentItems([...simulatedItems, ...merged]);
+          setLastBuildDate(data.lastBuildDate);
+          setLastUpdateTime(getLastUpdateTime(provider));
+          setRefreshInterval(
+            checkForErrors(updatedRegions) ? ERROR_REFRESH_RATE : NORMAL_REFRESH_RATE
+          );
+        } else {
+          // Fetch returned null (network/CORS failure) — keep default regions
+          // but still apply any simulated issues so TestControls keeps working
+          setHealthData((prev) => applySimulations(prev, currentIssues, provider));
+          setFetchError(true);
+        }
       } catch (error) {
         console.error("Failed to fetch health data:", error);
-        toast({
-          title: "Error",
-          description: `Failed to fetch ${provider.toUpperCase()} health status`,
-          variant: "destructive",
-        });
+        setFetchError(true);
+        // Keep existing healthData (default regions) so map stays usable
+        setHealthData((prev) =>
+          applySimulations(prev, simulatedIssuesRef.current, provider)
+        );
       } finally {
         setLoading(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selectedProvider, simulatedItems, checkForErrors, toast]
+    [selectedProvider, simulatedItems, checkForErrors, applySimulations, toast]
   );
 
-  // Initial load and refresh interval
+  // On provider change: immediately show default regions, then fetch live status
   useEffect(() => {
+    setHealthData(getDefaultRegions(selectedProvider));
     setLoading(true);
+    setFetchError(false);
     updateHealth(selectedProvider);
     const interval = setInterval(
       () => updateHealth(selectedProvider),
@@ -170,8 +221,7 @@ const Index = () => {
           const map = new Map(prev.map((i) => [i.guid, i]));
           map.set(newItem.guid, newItem);
           return Array.from(map.values()).sort(
-            (a, b) =>
-              new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
+            (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
           );
         });
       }
@@ -210,7 +260,6 @@ const Index = () => {
     setSelectedProvider(provider);
     setSimulatedIssues({});
     setSimulatedItems([]);
-    setLoading(true);
   }, []);
 
   const handleManualRefresh = useCallback(() => {
@@ -260,8 +309,14 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Status bar */}
+          {/* Status / error bar */}
           <div className="mt-1 text-sm text-gray-500 space-y-1 text-center">
+            {fetchError && (
+              <p className="text-xs text-amber-600 font-medium">
+                ⚠ Live feed unavailable — showing cached/default status.
+                Regions are still selectable for simulation.
+              </p>
+            )}
             <p>Status updates every 10 minutes under normal conditions</p>
             <p className="text-xs text-gray-400">
               * Refresh rate automatically increases to every 5 minutes when
@@ -270,7 +325,7 @@ const Index = () => {
             <div className="flex justify-center items-center gap-4 mt-2">
               {isSupabaseConfigured() && (
                 <span className="text-xs text-green-600 font-medium">
-                  ● Supabase persistence active
+                  ● Supabase active
                 </span>
               )}
               <p className="text-xs text-gray-400">
