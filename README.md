@@ -1,127 +1,129 @@
-# AWS Global Health Status Monitor
+# Cloud Health Map
 
-A real-time dashboard that visualizes the operational status of AWS regions worldwide through multiple implementation approaches.
+A real-time dashboard that visualizes the operational health of **AWS, Azure, and Google Cloud Platform** regions on an interactive world map. Events are persisted to Supabase so history survives browser resets and is shared across all users.
 
-## Project Versions
+🌐 **Live**: [qb411.github.io/cloud-health-map](https://qb411.github.io/cloud-health-map)
 
-This repository contains three different implementations of the AWS health monitoring system:
+---
 
-### 🗂️ [V1 - Original Supabase](./versions/v1-original-supabase/)
-**Status**: Archived
-- Real-time updates via Supabase
-- Database storage of events
-- Requires backend infrastructure
-- **Use Case**: Reference implementation
+## Features
 
-### 🚀 [V2 - Static GitHub Pages](./versions/v2-static-github/) 
-**Status**: Production Ready ✅
-- Completely static deployment
-- localStorage for data persistence
-- Zero hosting costs
-- **Comprehensive test automation framework**
-- **Fixed yellow "Service Issues" simulation**
-- **AWS-branded UI with flag images**
-- **Use Case**: Public AWS health monitoring
+- **Multi-cloud support** — switch between AWS, Azure, and GCP with a single click
+- **Interactive world map** — Leaflet.js markers color-coded by status (green / amber / red)
+- **Supabase persistence** — health events stored in a shared database, visible across sessions and devices; falls back to localStorage if Supabase is not configured
+- **Real-time updates** — Supabase Realtime pushes new events to all open browsers instantly
+- **Auto-refresh** — 10-minute polling under normal conditions, 5-minute polling when issues are detected
+- **Issue simulation** — test controls let you simulate outages on any region for any provider
+- **Status log** — color-coded event feed with per-provider badges (AWS / Azure / GCP)
+- **7-day event history** — events older than 7 days are automatically pruned
 
-### 🔮 [V3 - AWS Personal Health Dashboard](./versions/v3-aws-personal/)
-**Status**: Future Development
-- AWS Personal Health Dashboard API
-- Account-specific health data
-- Lambda + EventBridge architecture
-- **Use Case**: Personal AWS account monitoring
+---
 
 ## Quick Start
 
-Choose your preferred version:
-
 ```bash
-# For static GitHub Pages version (recommended for public use)
-cd versions/v2-static-github
+# Requires Node.js 20+
 npm install
-npm run dev
-
-# For original Supabase version (archived)
-cd versions/v1-original-supabase
-npm install
-npm run dev
+npm run dev        # http://localhost:8080/cloud-health-map
+npm run build      # production build → dist/
+npm run preview    # preview production build locally
 ```
 
-## Features Comparison
+---
 
-| Feature | V1 (Supabase) | V2 (Static) | V3 (AWS Personal) |
-|---------|---------------|-------------|-------------------|
-| Hosting Cost | Supabase limits | Free forever | AWS usage costs |
-| Real-time Updates | ✅ | Manual/Interval | ✅ |
-| Data Persistence | Database | localStorage | Database |
-| Account-specific | ❌ | ❌ | ✅ |
-| Setup Complexity | Medium | Low | High |
-| Deployment | Complex | GitHub Pages | AWS Infrastructure |
-| **Test Automation** | ❌ | **✅ Comprehensive** | Planned |
-| **Issue Simulation** | Basic | **✅ All Status Types** | Planned |
+## Supabase Setup (optional but recommended)
 
-## 🧪 V2 Testing Framework
+Without Supabase the app works fine using localStorage, but history is browser-local only.
 
-The V2 static version includes a comprehensive test automation framework:
+**1. Get your credentials**
+Go to [supabase.com](https://supabase.com) → your project → **Settings → API**:
+- **Project URL** → `VITE_SUPABASE_URL`
+- **anon / public key** → `VITE_SUPABASE_ANON_KEY`
 
-### Test Categories
-- **Unit Tests**: Status color mapping, CSS classes, core functions
-- **Integration Tests**: Component interactions, state management  
-- **E2E Tests**: Complete user workflows, all status types (Green/Yellow/Red)
-- **CI/CD Tests**: Build validation, security audit, performance checks
+**2. Create the events table**
+Run this once in your project's **SQL Editor**:
 
-### Run Tests
-```bash
-cd versions/v2-static-github
-npm run test              # Full CI/CD test suite
-npm run test:unit         # Unit tests only
-npm run test:integration  # Integration tests only
-npm run test:e2e          # End-to-end tests only
-npm run validate          # Quick validation
+```sql
+create table if not exists cloud_health_events (
+  id          uuid primary key default gen_random_uuid(),
+  guid        text not null unique,
+  title       text not null,
+  description text not null,
+  pub_date    timestamptz not null,
+  provider    text not null check (provider in ('aws', 'azure', 'gcp')),
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists idx_health_events_provider_date
+  on cloud_health_events (provider, pub_date desc);
+
+alter table cloud_health_events enable row level security;
+create policy "anon read"   on cloud_health_events for select using (true);
+create policy "anon insert" on cloud_health_events for insert with check (true);
 ```
 
-### Browser Test Runner
-Access: http://localhost:8080/cloud-health-map/tests/test-runner.html
+**3. Configure local dev**
 
-## 🎯 Test Controls (V2)
+Create `.env.local`:
+```
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
 
-Built-in simulation controls for testing AWS status scenarios:
+**4. Configure GitHub Actions**
 
-1. **🟢 Green (Operational)**: Default state, 10-minute refresh rate
-2. **🟡 Yellow (Issue)**: Service degradation, 5-minute refresh rate  
-3. **🔴 Red (Outage)**: Service unavailable, 5-minute refresh rate
+Add the same two values as repository secrets under **Settings → Secrets → Actions**.
 
-## Recent Updates
+---
 
-### Session 4 - September 7, 2025
-- **✅ Fixed**: Yellow "Service Issues" simulation (React state timing bug)
-- **✅ Added**: Comprehensive test automation framework
-- **✅ Enhanced**: All status type validation (Green/Yellow/Red)
-- **✅ Improved**: AWS-branded popups with flag images
-- **✅ Created**: CI/CD ready test scripts for deployment pipelines
+## Deployment (GitHub Pages)
 
-## Documentation
+Pushes to `main` automatically deploy via GitHub Actions (`.github/workflows/deploy.yml`).
 
-- [Project Specification](./PROJECT_SPECIFICATION.md) - Complete project overview
-- [Session Notes](./session-notes.md) - Development progress tracking
-- [Deployment Guides](./docs/deployment-guides/) - Version-specific deployment instructions
-- [V2 Test Documentation](./versions/v2-static-github/tests/README.md) - Test automation details
+The workflow uses Node 22, injects the Supabase secrets at build time, and deploys the `dist/` folder to GitHub Pages.
 
-## Current Focus
+---
 
-**V2 (Static GitHub Pages)** is production-ready with:
-- 🆓 Free hosting on GitHub Pages
-- 🔄 5-10 minute refresh intervals
-- 💾 localStorage data persistence with 7-day retention
-- 🌐 CORS-handled RSS feed fetching
-- 🗺️ Interactive global map with AWS branding
-- 📊 Real-time status visualization
-- 🧪 **Comprehensive test automation framework**
-- 🐛 **All known bugs fixed**
+## Project Structure
 
-## Contributing
+```
+src/
+├── lib/
+│   ├── aws-health.ts       # AWS RSS feed fetch + localStorage cache
+│   ├── cloud-health.ts     # Azure & GCP fetchers, shared types, region definitions
+│   ├── supabase-client.ts  # Null-safe Supabase client (no-op when unconfigured)
+│   └── event-store.ts      # upsert / query / realtime-subscribe
+├── components/
+│   ├── RegionMap.tsx        # Leaflet world map with provider-branded popups
+│   ├── RegionSummary.tsx    # Summary counts (operational / issue / outage)
+│   ├── StatusLog.tsx        # Event feed with provider badges
+│   └── TestControls.tsx     # Simulate issues/outages per region
+└── pages/
+    └── Index.tsx            # Main dashboard, provider switching, refresh logic
 
-Each version is independently maintained. See the README in each version directory for specific setup and contribution guidelines.
+versions/                    # Archived earlier implementations (reference only)
+├── v1-original-supabase/
+├── v1-free-supabase/
+├── v2-static-github/
+└── v3-aws-personal/
+```
+
+---
+
+## Architecture Notes
+
+- **No backend required** — all data comes from public RSS/status feeds via a CORS proxy fallback
+- **CORS proxy** — direct fetch is attempted first; `api.allorigins.win` is used as fallback
+- **Type safety** — `RSSItem` and `RegionStatus` are unified types across all providers; `aws-health.ts` and `cloud-health.ts` have a deliberate one-way import to avoid circular dependencies
+
+---
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for full release history.
+
+---
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT — see [LICENSE](./LICENSE) for details.
