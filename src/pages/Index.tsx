@@ -10,12 +10,14 @@ import {
   fetchGCPHealth,
   AZURE_REGIONS,
   GCP_REGIONS,
+  OCI_REGIONS,
   type RegionStatus,
   type RSSItem,
   type CloudProvider,
   type CloudHealthResult,
   getAzureLastUpdateTime,
   getGCPLastUpdateTime,
+  getOCILastUpdateTime,
 } from "@/lib/cloud-health";
 import { upsertEvents, getRecentEvents, subscribeToEvents } from "@/lib/event-store";
 import { isSupabaseConfigured } from "@/lib/supabase-client";
@@ -48,6 +50,12 @@ const PROVIDER_META: Record<
     description: "Real-time status of GCP services across global regions",
     activeClass: "bg-green-600 text-white",
   },
+  oci: {
+    label: "OCI",
+    title: "Oracle Cloud Infrastructure Health Status",
+    description: "Real-time status of OCI services across global regions",
+    activeClass: "bg-red-700 text-white",
+  },
 };
 
 /**
@@ -76,6 +84,12 @@ function getDefaultRegions(provider: CloudProvider): RegionStatus[] {
         status: "operational",
         provider: "gcp",
       }));
+    case "oci":
+      return OCI_REGIONS.map((r) => ({
+        ...r,
+        status: "operational",
+        provider: "oci",
+      }));
   }
 }
 
@@ -84,6 +98,7 @@ const getLastUpdateTime = (provider: CloudProvider): string | null => {
     case "aws":   return getAWSLastUpdateTime();
     case "azure": return getAzureLastUpdateTime();
     case "gcp":   return getGCPLastUpdateTime();
+    case "oci":   return getOCILastUpdateTime();
   }
 };
 
@@ -101,6 +116,7 @@ const Index = () => {
     ...getDefaultRegions("aws"),
     ...getDefaultRegions("azure"),
     ...getDefaultRegions("gcp"),
+    ...getDefaultRegions("oci"),
   ]);
 
   // Seed with all regions immediately so map/TestControls work from first render
@@ -165,9 +181,10 @@ const Index = () => {
           }
         } else if (provider === "azure") {
           data = await fetchAzureHealth();
-        } else {
+        } else if (provider === "gcp") {
           data = await fetchGCPHealth();
         }
+        // OCI: no browser-side fetcher — data comes exclusively from Supabase via cron
 
         const currentIssues = overrideIssues ?? simulatedIssuesRef.current;
 
@@ -327,7 +344,7 @@ const Index = () => {
             <div className="text-center flex-1">
               {/* Provider switcher */}
               <div className="flex justify-center gap-2 mb-4">
-                {(["aws", "azure", "gcp"] as CloudProvider[]).map((p) => (
+                {(["aws", "azure", "gcp", "oci"] as CloudProvider[]).map((p) => (
                   <button
                     key={p}
                     onClick={() => handleProviderChange(p)}

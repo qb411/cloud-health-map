@@ -3,7 +3,7 @@ import { fetchAWSHealth, getLastUpdateTime as getAWSLastUpdateTime } from "./aws
 
 // ─── Shared types ────────────────────────────────────────────────────────────
 
-export type CloudProvider = "aws" | "azure" | "gcp";
+export type CloudProvider = "aws" | "azure" | "gcp" | "oci";
 export type StatusType = "operational" | "issue" | "outage";
 
 export type RSSItem = {
@@ -235,6 +235,50 @@ export const GCP_REGIONS: Array<{
     name: "northamerica-northeast2 (Toronto)",
     location: [-79.3832, 43.6532],
   },
+];
+
+export const OCI_REGIONS: Array<{
+  code: string;
+  name: string;
+  location: [number, number];
+}> = [
+  { code: "us-ashburn-1", name: "US East (Ashburn)", location: [-77.4875, 38.9517] },
+  { code: "us-phoenix-1", name: "US West (Phoenix)", location: [-112.074, 33.4484] },
+  { code: "us-sanjose-1", name: "US West (San Jose)", location: [-121.8863, 37.3382] },
+  { code: "us-chicago-1", name: "US Central (Chicago)", location: [-87.6298, 41.8781] },
+  { code: "ca-montreal-1", name: "Canada Central (Montreal)", location: [-73.5673, 45.5017] },
+  { code: "ca-toronto-1", name: "Canada Southeast (Toronto)", location: [-79.3832, 43.6532] },
+  { code: "mx-queretaro-1", name: "Mexico Central (Querétaro)", location: [-100.3899, 20.5888] },
+  { code: "mx-monterrey-1", name: "Mexico North (Monterrey)", location: [-100.3161, 25.6866] },
+  { code: "sa-saopaulo-1", name: "Brazil Southeast (São Paulo)", location: [-46.6333, -23.5505] },
+  { code: "sa-vinhedo-1", name: "Brazil Southeast (Vinhedo)", location: [-47.0486, -23.0396] },
+  { code: "sa-santiago-1", name: "Chile Central (Santiago)", location: [-70.6693, -33.4489] },
+  { code: "sa-bogota-1", name: "Colombia Central (Bogotá)", location: [-74.0721, 4.711] },
+  { code: "uk-london-1", name: "UK South (London)", location: [-0.1276, 51.5074] },
+  { code: "uk-cardiff-1", name: "UK West (Cardiff)", location: [-3.1791, 51.4816] },
+  { code: "eu-frankfurt-1", name: "Germany Central (Frankfurt)", location: [8.6821, 50.1109] },
+  { code: "eu-amsterdam-1", name: "Netherlands West (Amsterdam)", location: [4.8952, 52.3702] },
+  { code: "eu-paris-1", name: "France Central (Paris)", location: [2.3522, 48.8566] },
+  { code: "eu-marseille-1", name: "France South (Marseille)", location: [5.3698, 43.2965] },
+  { code: "eu-milan-1", name: "Italy North (Milan)", location: [9.19, 45.4642] },
+  { code: "eu-madrid-1", name: "Spain Central (Madrid)", location: [-3.7038, 40.4168] },
+  { code: "eu-zurich-1", name: "Switzerland North (Zurich)", location: [8.5417, 47.3769] },
+  { code: "eu-stockholm-1", name: "Sweden Central (Stockholm)", location: [18.0686, 59.3293] },
+  { code: "eu-jovanovac-1", name: "Serbia Central (Jovanovac)", location: [21.268, 43.963] },
+  { code: "ap-tokyo-1", name: "Japan East (Tokyo)", location: [139.6917, 35.6895] },
+  { code: "ap-osaka-1", name: "Japan West (Osaka)", location: [135.5023, 34.6937] },
+  { code: "ap-seoul-1", name: "South Korea Central (Seoul)", location: [126.978, 37.5665] },
+  { code: "ap-chuncheon-1", name: "South Korea NE (Chuncheon)", location: [127.7295, 37.8813] },
+  { code: "ap-mumbai-1", name: "India West (Mumbai)", location: [72.8777, 19.076] },
+  { code: "ap-hyderabad-1", name: "India Central (Hyderabad)", location: [78.4867, 17.385] },
+  { code: "ap-singapore-1", name: "Singapore", location: [103.8198, 1.3521] },
+  { code: "ap-sydney-1", name: "Australia East (Sydney)", location: [151.2093, -33.8688] },
+  { code: "ap-melbourne-1", name: "Australia Southeast (Melbourne)", location: [144.9631, -37.8136] },
+  { code: "me-dubai-1", name: "UAE North (Dubai)", location: [55.2708, 25.2048] },
+  { code: "me-abudhabi-1", name: "UAE Central (Abu Dhabi)", location: [54.3773, 24.4539] },
+  { code: "me-jeddah-1", name: "Saudi Arabia West (Jeddah)", location: [39.1925, 21.5169] },
+  { code: "il-jerusalem-1", name: "Israel Central (Jerusalem)", location: [35.2137, 31.7683] },
+  { code: "af-johannesburg-1", name: "South Africa (Johannesburg)", location: [28.0473, -26.2041] },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -487,3 +531,5 @@ export const getAzureLastUpdateTime = (): string | null =>
   localStorage.getItem(AZURE_TIMESTAMP_KEY);
 export const getGCPLastUpdateTime = (): string | null =>
   localStorage.getItem(GCP_TIMESTAMP_KEY);
+export const getOCILastUpdateTime = (): string | null =>
+  localStorage.getItem("oci-health-timestamp");
