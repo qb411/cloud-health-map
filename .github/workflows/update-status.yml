@@ -1,0 +1,42 @@
+name: Update Cloud Status Data
+
+on:
+  schedule:
+    # Every 10 minutes
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - ".github/workflows/update-status.yml"
+
+jobs:
+  update-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: "scripts/package-lock.json"
+
+      - name: Install dependencies
+        run: |
+          cd scripts
+          npm install
+
+      - name: Fetch and store cloud status
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          cd scripts
+          node update-status.js
+
+      - name: Done
+        run: echo "✅ Cloud status update complete at $(date -u)"

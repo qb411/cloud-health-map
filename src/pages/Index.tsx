@@ -95,6 +95,14 @@ const Index = () => {
   const [fetchError, setFetchError] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<CloudProvider>("aws");
 
+  // All regions across all providers — kept in a ref so TestControls always
+  // has the full list regardless of which provider tab is active
+  const [allRegions, setAllRegions] = useState<RegionStatus[]>(() => [
+    ...getDefaultRegions("aws"),
+    ...getDefaultRegions("azure"),
+    ...getDefaultRegions("gcp"),
+  ]);
+
   // Seed with all regions immediately so map/TestControls work from first render
   const [healthData, setHealthData] = useState<RegionStatus[]>(
     () => getDefaultRegions("aws")
@@ -173,6 +181,13 @@ const Index = () => {
 
           const updatedRegions = applySimulations(data.regions, currentIssues, provider);
           setHealthData(updatedRegions);
+
+          // Update the allRegions pool with fresh status for this provider
+          setAllRegions((prev) => {
+            const others = prev.filter((r) => r.provider !== provider);
+            return [...others, ...updatedRegions];
+          });
+
           setRecentItems([...simulatedItems, ...merged]);
           setLastBuildDate(data.lastBuildDate);
           setLastUpdateTime(getLastUpdateTime(provider));
@@ -230,30 +245,43 @@ const Index = () => {
   }, [selectedProvider]);
 
   const handleSimulateIssue = useCallback(
-    (regionCode: string, status: "issue" | "outage") => {
+    (regionCode: string, status: "issue" | "outage", simulateProvider: CloudProvider) => {
       const newIssues = { ...simulatedIssuesRef.current, [regionCode]: status };
       setSimulatedIssues(newIssues);
 
-      const region = healthData.find((r) => r.code === regionCode);
+      // Find region name from allRegions (works regardless of active provider tab)
+      const region = allRegions.find((r) => r.code === regionCode && r.provider === simulateProvider);
       const regionName = region?.name ?? regionCode;
 
       const newItem: RSSItem = {
         title: `[TEST] ${status.toUpperCase()} detected in ${regionCode}`,
         description: `Simulated ${status} in the ${regionName} region for testing.`,
         pubDate: new Date().toUTCString(),
-        guid: `test-${selectedProvider}-${regionCode}-${Date.now()}`,
-        provider: selectedProvider,
+        guid: `test-${simulateProvider}-${regionCode}-${Date.now()}`,
+        provider: simulateProvider,
       };
 
       setSimulatedItems((prev) => [newItem, ...prev]);
       toast({
         title: "Test Event Created",
-        description: `Simulated ${status} for ${regionCode}`,
+        description: `Simulated ${status} for ${simulateProvider.toUpperCase()} ${regionCode}`,
       });
 
-      updateHealth(selectedProvider, newIssues);
+      // If simulating on the currently-visible provider, refresh the map
+      if (simulateProvider === selectedProvider) {
+        updateHealth(selectedProvider, newIssues);
+      } else {
+        // Update allRegions directly for the other provider
+        setAllRegions((prev) =>
+          prev.map((r) =>
+            r.code === regionCode && r.provider === simulateProvider
+              ? { ...r, status }
+              : r
+          )
+        );
+      }
     },
-    [healthData, selectedProvider, toast, updateHealth]
+    [allRegions, selectedProvider, toast, updateHealth]
   );
 
   const handleProviderChange = useCallback((provider: CloudProvider) => {
@@ -303,7 +331,8 @@ const Index = () => {
             </div>
             <div className="flex-1 flex justify-end">
               <TestControls
-                regions={healthData}
+                allRegions={allRegions}
+                selectedProvider={selectedProvider}
                 onSimulateIssue={handleSimulateIssue}
               />
             </div>

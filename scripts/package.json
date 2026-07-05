@@ -1,0 +1,20 @@
+{
+  "name": "cloud-health-rss-processor",
+  "version": "1.0.0",
+  "description": "Server-side RSS feed processor for cloud provider status updates",
+  "main": "update-status.js",
+  "type": "module",
+  "scripts": {
+    "start": "node update-status.js",
+    "test": "node test-feeds.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.48.1",
+    "xml2js": "^0.6.2",
+    "node-fetch": "^3.3.2",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
