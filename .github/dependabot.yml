@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # Enable version updates for npm
+  # Root application dependencies
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -17,14 +17,10 @@ updates:
     commit-message:
       prefix: "deps(security)"
       include: "scope"
-    ignore:
-      # Ignore major version updates to avoid breaking changes
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
 
-  # Enable version updates for npm in v2-static-github subdirectory
+  # Server-side scripts dependencies
   - package-ecosystem: "npm"
-    directory: "/versions/v2-static-github"
+    directory: "/scripts"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -40,25 +36,7 @@ updates:
       prefix: "deps(security)"
       include: "scope"
 
-  # Enable version updates for npm in v1-free-supabase subdirectory
-  - package-ecosystem: "npm"
-    directory: "/versions/v1-free-supabase"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "America/Los_Angeles"
-    open-pull-requests-limit: 5
-    reviewers:
-      - "qb411"
-    labels:
-      - "dependencies"
-      - "security"
-    commit-message:
-      prefix: "deps(security)"
-      include: "scope"
-
-  # Enable version updates for GitHub Actions
+  # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
