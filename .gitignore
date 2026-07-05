@@ -28,4 +28,7 @@ dist-ssr
 
 # Supabase CLI temp files
 supabase/.temp/
+
+# Claude Code local config
+.claude/
 20260704_*.json

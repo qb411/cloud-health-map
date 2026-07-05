@@ -4,56 +4,61 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Cloud Health Map is a multi-cloud status monitoring dashboard that visualizes AWS, Azure, and GCP service health across global regions. The main application (root) is being refactored to support multi-cloud monitoring, while legacy versions remain in the `versions/` directory.
+Cloud Health Map is a multi-cloud status monitoring dashboard. It visualizes AWS, Azure, GCP (and OCI on the backend) service health across global regions on an interactive Leaflet.js world map. Events are persisted to Supabase.
 
-## Architecture
+Live: https://qb411.github.io/cloud-health-map
 
-### Current Structure (Root - Multi-Cloud Refactor)
-- **React 18 + TypeScript** frontend with Vite 5
-- **Tailwind CSS + shadcn/ui** components
-- **Leaflet.js** for interactive world map
-- **localStorage** for data persistence (7-day retention)
-- **Multi-provider support**: AWS, Azure, GCP
+## Tech Stack
 
-### Key Directories
-- `/src/lib/` - Core utilities including `aws-health.ts`, `cloud-health.ts` (multi-provider)
-- `/src/components/` - RegionMap, RegionSummary, StatusLog, TestControls
-- `/src/pages/` - Index.tsx (main multi-cloud dashboard)
-- `/versions/` - Legacy implementations (v1-supabase, v2-static-github, v3-aws-personal)
+- **Frontend**: React 18 + TypeScript, Vite 6, Tailwind CSS + shadcn/ui, Leaflet.js
+- **Persistence**: Supabase (cloud_health_events table, RLS anon read/insert)
+- **Data ingestion**: GitHub Actions cron (every 10 min) fetches RSS feeds server-side → Supabase
+- **Deployment**: GitHub Pages via GitHub Actions
+- **Node requirement**: >=20 (use 22 locally via nvm)
 
-## Common Commands
+## Commands
 
 ```bash
-# Install dependencies
-npm install
-
-# Development server
-npm run dev
-
-# Production build
-npm run build
-
-# Preview production build
-npm run preview
-
-# Lint
-npm run lint
-
-# Deploy to GitHub Pages
-npm run predeploy && npm run deploy
+npm install          # Install deps (Node 22 required)
+npm run dev          # Dev server at localhost:8080
+npm run build        # tsc + vite build (MUST pass before committing)
+npm run preview      # Preview production build
+npm run lint         # ESLint
 ```
 
-## Multi-Cloud Implementation
+## Architecture Rules
 
-The root application supports three cloud providers:
-- **AWS**: RSS feed from `status.aws.amazon.com/rss/all.rss`
-- **Azure**: RSS feed from `status.azure.com/rss/`
-- **GCP**: Status feed from `status.cloud.google.com`
+1. **No circular imports.** `aws-health.ts` is self-contained. `cloud-health.ts` imports FROM it (one-way only).
+2. **Types live in `cloud-health.ts`**: `RegionStatus`, `RSSItem`, `CloudProvider`, `StatusType`.
+3. **Components import types from `cloud-health.ts`**, never from `aws-health.ts`.
+4. **Browser-side RSS fetching is unreliable** (CORS). The primary data source is the server-side cron script (`scripts/update-status.js`). The browser reads from Supabase.
+5. **`versions/` directory is archived** — do not modify files there.
 
-All providers use localStorage for persistence and CORS proxy fallback for RSS fetching.
+## Key Files
 
-## Development Notes
+| File | Purpose |
+|------|---------|
+| `src/lib/aws-health.ts` | AWS RSS fetch + localStorage cache (self-contained) |
+| `src/lib/cloud-health.ts` | Azure/GCP fetchers, shared types, region definitions |
+| `src/lib/supabase-client.ts` | Null-safe Supabase client (graceful no-op when unconfigured) |
+| `src/lib/event-store.ts` | Supabase upsert/query/realtime helpers |
+| `src/pages/Index.tsx` | Main dashboard: provider switching, refresh, simulation |
+| `src/components/TestControls.tsx` | Simulate incidents (receives `allRegions` across all providers) |
+| `scripts/update-status.js` | Server-side cron: fetch AWS/Azure/GCP/OCI → Supabase |
+| `.github/workflows/update-status.yml` | Cron schedule (*/10 * * * *) |
+| `.github/workflows/deploy.yml` | Build + deploy to GitHub Pages |
+| `.github/workflows/migrate.yml` | Auto-apply Supabase migrations on push |
 
-- Base path configured as `/cloud-health-map/` for GitHub Pages deployment
-- Auto-refresh: 10 minutes normal, 5 minutes when issues detected
-- Test controls available for simulating issues/outages per region
+## Environment Variables
+
+Required for local dev (put in `.env.local`, which is gitignored):
+- `VITE_SUPABASE_URL` — Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` — Supabase anon/public key
+
+For running the cron script locally:
+- `SUPABASE_URL` — same as above but without VITE_ prefix
+- `SUPABASE_SERVICE_ROLE_KEY` — service role JWT (never expose client-side)
+
+## For detailed local-only guidance
+
+See `.claude/steering.md` (gitignored) for secrets references, Supabase connection details, dependency directions, and debugging tips.
