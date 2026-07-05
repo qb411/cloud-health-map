@@ -177,11 +177,14 @@ const RegionMap = ({ regions }: RegionMapProps) => {
 
       // Add popup with region info
       const providerName = region.provider?.toUpperCase() || 'AWS';
-      const headerGradient = region.provider === 'azure'
-        ? 'linear-gradient(135deg, #0078d4 0%, #00bcf2 100%)'
+      const headerGradient =
+        region.provider === 'azure'
+          ? 'linear-gradient(135deg, #0078d4 0%, #00bcf2 100%)'
         : region.provider === 'gcp'
-        ? 'linear-gradient(135deg, #4285f4 0%, #34a853 50%, #fbbc04 75%, #ea4335 100%)'
-        : 'linear-gradient(135deg, #ff9900 0%, #ff7700 100%)';
+          ? 'linear-gradient(135deg, #4285f4 0%, #34a853 50%, #fbbc04 75%, #ea4335 100%)'
+        : region.provider === 'oci'
+          ? 'linear-gradient(135deg, #c74634 0%, #8b1a1a 100%)'
+        : 'linear-gradient(135deg, #ff9900 0%, #ff7700 100%)'; // AWS default
 
       marker.bindPopup(`
         <div class="aws-popup-header" style="background: ${headerGradient};">
