@@ -1,4 +1,3 @@
-import { toast } from "@/hooks/use-toast";
 import { awsRegions, type AWSRegion } from "./aws-regions";
 import { subDays } from "date-fns";
 
@@ -162,11 +161,6 @@ export const fetchAWSHealth = async (): Promise<AWSHealthData | null> => {
     return { regions, recentItems: allItems.slice(0, 50), lastBuildDate };
   } catch (error) {
     console.error("Error fetching AWS health data:", error);
-    toast({
-      title: "Error",
-      description: "Failed to fetch AWS health status. Please try again later.",
-      variant: "destructive",
-    });
 
     const cachedItems = getStoredItems();
     if (cachedItems.length > 0) {

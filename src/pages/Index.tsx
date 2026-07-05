@@ -171,12 +171,14 @@ const Index = () => {
 
         const currentIssues = overrideIssues ?? simulatedIssuesRef.current;
 
+        // Always try to get Supabase events — this works even when RSS fails
+        const supabaseItems = await getRecentEvents(provider, 7, 100);
+
         if (data) {
-          // Persist to Supabase (fire-and-forget)
+          // RSS fetch succeeded — persist new events to Supabase (fire-and-forget)
           upsertEvents(data.recentItems as RSSItem[]).catch(() => {});
 
-          // Merge Supabase historical events with fresh feed
-          const supabaseItems = await getRecentEvents(provider, 7, 100);
+          // Merge fresh RSS + Supabase historical events
           const merged = mergeRSSItems(data.recentItems as RSSItem[], supabaseItems);
 
           const updatedRegions = applySimulations(data.regions, currentIssues, provider);
@@ -195,10 +197,25 @@ const Index = () => {
             checkForErrors(updatedRegions) ? ERROR_REFRESH_RATE : NORMAL_REFRESH_RATE
           );
         } else {
-          // Fetch returned null (network/CORS failure) — keep default regions
-          // but still apply any simulated issues so TestControls keeps working
-          setHealthData((prev) => applySimulations(prev, currentIssues, provider));
+          // RSS fetch failed (CORS) — fall back to Supabase data only
           setFetchError(true);
+
+          // Apply region status from Supabase events
+          const defaultRegions = getDefaultRegions(provider);
+          const regionStatusFromEvents = deriveRegionStatus(supabaseItems, defaultRegions);
+          const updatedRegions = applySimulations(regionStatusFromEvents, currentIssues, provider);
+          setHealthData(updatedRegions);
+
+          setAllRegions((prev) => {
+            const others = prev.filter((r) => r.provider !== provider);
+            return [...others, ...updatedRegions];
+          });
+
+          // Still show Supabase events in the status log
+          if (supabaseItems.length > 0) {
+            setRecentItems([...simulatedItems, ...supabaseItems]);
+            setLastUpdateTime(new Date().toISOString());
+          }
         }
       } catch (error) {
         console.error("Failed to fetch health data:", error);
@@ -394,6 +411,37 @@ function mergeRSSItems(a: RSSItem[], b: RSSItem[]): RSSItem[] {
   return Array.from(map.values()).sort(
     (x, y) => new Date(y.pubDate).getTime() - new Date(x.pubDate).getTime()
   );
+}
+
+/**
+ * Derive region statuses from Supabase events when RSS feed is unavailable.
+ * Scans event titles/descriptions for region codes and classifies severity.
+ */
+function deriveRegionStatus(events: RSSItem[], defaults: RegionStatus[]): RegionStatus[] {
+  const statusMap = new Map<string, "operational" | "issue" | "outage">();
+
+  for (const event of events) {
+    const text = `${event.title} ${event.description}`.toLowerCase();
+
+    // Try to find region codes in the text
+    for (const region of defaults) {
+      if (text.includes(region.code.toLowerCase()) || text.includes(region.name.toLowerCase())) {
+        let status: "issue" | "outage" = "issue";
+        if (text.includes("outage") || text.includes("unavailable") || text.includes("disruption")) {
+          status = "outage";
+        }
+        const current = statusMap.get(region.code);
+        if (!current || status === "outage") {
+          statusMap.set(region.code, status);
+        }
+      }
+    }
+  }
+
+  return defaults.map((r) => ({
+    ...r,
+    status: statusMap.get(r.code) ?? "operational",
+  }));
 }
 
 export default Index;
