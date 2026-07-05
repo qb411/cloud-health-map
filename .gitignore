@@ -22,4 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Supabase CLI temp files
+supabase/.temp/
 20260704_*.json
