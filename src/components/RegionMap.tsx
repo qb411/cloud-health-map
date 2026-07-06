@@ -186,6 +186,16 @@ const RegionMap = ({ regions, eventCounts = {}, className }: RegionMapProps) => 
     };
   }, []);
 
+  // Resize observer — tells Leaflet to recalculate when container changes size (e.g., NOC mode)
+  useEffect(() => {
+    if (!mapContainer.current || !map.current) return;
+    const resizeObserver = new ResizeObserver(() => {
+      map.current?.invalidateSize();
+    });
+    resizeObserver.observe(mapContainer.current);
+    return () => resizeObserver.disconnect();
+  }, []);
+
   // Swap tile layer when theme changes
   useEffect(() => {
     if (!map.current) return;
@@ -296,7 +306,7 @@ const RegionMap = ({ regions, eventCounts = {}, className }: RegionMapProps) => 
   }, [regions, eventCounts]);
 
   return (
-    <Card className={className || "relative w-full h-[600px] overflow-hidden rounded-lg shadow-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900"}>
+    <Card className={`relative overflow-hidden ${className || "w-full h-[600px] rounded-lg shadow-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900"}`}>
       <div ref={mapContainer} className="absolute inset-0" />
     </Card>
   );

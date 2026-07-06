@@ -444,8 +444,8 @@ const Index = () => {
         </div>
 
         {/* NOC Map — fills remaining space */}
-        <div className="flex-1 relative">
-          <RegionMap regions={healthData} eventCounts={eventCounts} className="absolute inset-0 rounded-none border-0 shadow-none bg-gray-950" />
+        <div className="flex-1 min-h-0">
+          <RegionMap regions={healthData} eventCounts={eventCounts} className="w-full h-full rounded-none border-0 shadow-none bg-gray-950" />
         </div>
       </div>
     );
