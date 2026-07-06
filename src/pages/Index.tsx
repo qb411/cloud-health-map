@@ -401,7 +401,7 @@ const Index = () => {
             <div className="flex justify-center items-center gap-4 mt-2">
               {isSupabaseConfigured() && (
                 <span className="text-xs text-green-600 font-medium">
-                  ● Supabase active
+                  ● Database live
                 </span>
               )}
               <p className="text-xs text-gray-400 dark:text-gray-500">
