@@ -80,9 +80,10 @@ const getStatusColor = (status: "operational" | "issue" | "outage") => {
 interface RegionMapProps {
   regions: RegionStatus[];
   eventCounts?: Record<string, number>; // regionCode -> count of active incidents
+  className?: string; // Override card height/styling (e.g., NOC mode)
 }
 
-const RegionMap = ({ regions, eventCounts = {} }: RegionMapProps) => {
+const RegionMap = ({ regions, eventCounts = {}, className }: RegionMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
@@ -295,7 +296,7 @@ const RegionMap = ({ regions, eventCounts = {} }: RegionMapProps) => {
   }, [regions, eventCounts]);
 
   return (
-    <Card className="relative w-full h-[600px] overflow-hidden rounded-lg shadow-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900">
+    <Card className={className || "relative w-full h-[600px] overflow-hidden rounded-lg shadow-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900"}>
       <div ref={mapContainer} className="absolute inset-0" />
     </Card>
   );
