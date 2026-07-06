@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Cloud Health Map</title>
+    <script>
+      // Single Page App redirect for GitHub Pages
+      // When a user directly navigates to /cloud-health-map/history, GitHub serves this 404.
+      // We redirect to the root with the path stored in sessionStorage so the SPA router can pick it up.
+      sessionStorage.redirect = location.href;
+      location.replace(location.pathname.split('/').slice(0, 2).join('/') + '/');
+    </script>
+  </head>
+  <body></body>
+</html>

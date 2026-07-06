@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { format, isToday, isYesterday } from "date-fns";
 import type { RSSItem, CloudProvider } from "@/lib/cloud-health";
@@ -338,6 +339,7 @@ const StatusLog = ({ items, lastBuildDate }: StatusLogProps) => {
       </div>
 
       {/* Pagination */}
+      {/* Pagination */}
       {totalCount > 0 && (
         <div className="mt-6 flex items-center justify-between">
           <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -354,6 +356,16 @@ const StatusLog = ({ items, lastBuildDate }: StatusLogProps) => {
           )}
         </div>
       )}
+
+      {/* Link to full history */}
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-center">
+        <Link
+          to="/history"
+          className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+        >
+          View full event history →
+        </Link>
+      </div>
     </Card>
   );
 };
