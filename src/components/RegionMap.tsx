@@ -202,7 +202,7 @@ const RegionMap = ({ regions, eventCounts = {}, className }: RegionMapProps) => 
     // Delay to allow DOM to settle after layout change
     const timer = setTimeout(() => {
       map.current?.invalidateSize();
-    }, 100);
+    }, 200);
     return () => clearTimeout(timer);
   }, [className]);
 
@@ -317,7 +317,7 @@ const RegionMap = ({ regions, eventCounts = {}, className }: RegionMapProps) => 
 
   return (
     <Card className={className ? `relative ${className} overflow-hidden` : "relative w-full h-[600px] overflow-hidden rounded-lg shadow-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900"}>
-      <div ref={mapContainer} className="w-full h-full" />
+      <div ref={mapContainer} style={{ width: '100%', height: '100%' }} />
     </Card>
   );
 };

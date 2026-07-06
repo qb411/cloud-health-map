@@ -444,7 +444,7 @@ const Index = () => {
         </div>
 
         {/* NOC Map — fills remaining space */}
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0" style={{ height: 'calc(100vh - 88px)' }}>
           <RegionMap regions={healthData} eventCounts={eventCounts} className="w-full h-full rounded-none border-0 shadow-none bg-gray-950" />
         </div>
       </div>
