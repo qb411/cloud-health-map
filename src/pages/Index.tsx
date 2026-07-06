@@ -349,7 +349,7 @@ const Index = () => {
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
           <div className="flex justify-between items-start mb-4">
-            <div className="flex-1" />
+            <div className="w-10" />
             <div className="text-center flex-1">
               {/* Provider switcher */}
               <div className="flex justify-center gap-2 mb-4">
@@ -367,12 +367,12 @@ const Index = () => {
                   </button>
                 ))}
               </div>
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl">
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl whitespace-nowrap">
                 {meta.title}
               </h1>
               <p className="mt-2 text-lg text-gray-600 dark:text-gray-300">{meta.description}</p>
             </div>
-            <div className="flex-1 flex justify-end">
+            <div className="flex items-center gap-2">
               <ThemeToggle />
               <TestControls
                 allRegions={allRegions}
