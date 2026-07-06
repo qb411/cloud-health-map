@@ -113,6 +113,29 @@ Improve the visual design and usability of the Cloud Health Map dashboard, takin
 
 ---
 
+## Known Issue: NOC Mode Map Does Not Fill Screen
+
+**Status**: Unresolved  
+**Symptom**: When entering NOC fullscreen mode, the Leaflet map stays at its default ~600px height and does not expand to fill the available viewport space. The surrounding dark background fills correctly, but the map tiles remain constrained.
+
+**What was tried**:
+1. CSS `h-full` chain from `fixed inset-0` → `flex-1` → Card → mapContainer (did not work — Leaflet cannot resolve percentage heights)
+2. `absolute inset-0` on the Card (conflicted with internal `relative` needs)
+3. Explicit `calc(100vh - 88px)` inline style on the parent div (still did not work)
+4. `ResizeObserver` calling `map.invalidateSize()` (fires but map doesn't resize)
+5. Delayed `invalidateSize()` on className change (200ms, no effect)
+
+**Root Cause Theory**: Leaflet initializes its internal size based on the container's `clientHeight` at mount time. In NOC mode, React renders a NEW `<RegionMap>` instance (different JSX branch), so the map mounts fresh. The container should have pixel height from `calc()`, but something in the rendering chain prevents Leaflet from reading it correctly — possibly the fullscreen API hasn't completed its layout pass by the time Leaflet initializes, or the shadcn Card component adds intermediate elements.
+
+**Suggested Next Steps**:
+- Try rendering only ONE `<RegionMap>` instance (not two branches) and resizing it via CSS when `nocMode` toggles — this avoids remounting
+- Try removing the Card wrapper entirely in NOC mode (just a plain div)
+- Try `requestAnimationFrame` + `invalidateSize()` after fullscreen API resolves
+- Test with a hardcoded `height: 900px` style to confirm Leaflet CAN render at that size (isolates CSS vs Leaflet issue)
+- Check if the issue is specific to 4K screens / DPR > 1
+
+---
+
 ## Acceptance Criteria
 
 1. Toggle between light and dark theme — map tiles change, all UI elements remain readable
