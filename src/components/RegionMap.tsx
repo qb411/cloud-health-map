@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
@@ -7,33 +7,17 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { useTheme } from "next-themes";
 import type { RegionStatus } from "@/lib/cloud-health";
 import { Card } from "@/components/ui/card";
-import { Globe } from "lucide-react";
 
 // ─── Tile configurations ──────────────────────────────────────────────────────
-// Light mode: CARTO Voyager (colorful, good contrast)
-// Dark mode: CARTO dark_nolabels base + light_only_labels overlay for readable text
+// Light mode: CARTO Positron (clean, no labels)
+// Dark mode: CARTO Dark Matter (no labels) — our markers ARE the data
 
 const TILES = {
-  light: {
-    base: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
-    labels: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",
-  },
-  dark: {
-    base: "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
-    labels: "https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png",
-  },
+  light: "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
+  dark: "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
 } as const;
 
-// Language-specific tile labels (OSM-based, shows local language names)
-const TILES_LOCAL_LANG = {
-  light: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-} as const;
-
-const CARTO_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>';
-const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-
-type MapLanguage = "en" | "local";
+const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>';
 
 // Helper function to get country flag image
 const getCountryFlag = (regionName: string): string => {
@@ -102,10 +86,8 @@ const RegionMap = ({ regions, eventCounts = {} }: RegionMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
-  const baseLayerRef = useRef<L.TileLayer | null>(null);
-  const labelsLayerRef = useRef<L.TileLayer | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
   const { resolvedTheme } = useTheme();
-  const [mapLanguage, setMapLanguage] = useState<MapLanguage>("en");
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -124,6 +106,12 @@ const RegionMap = ({ regions, eventCounts = {} }: RegionMapProps) => {
     // Add CSS to style the popup and map controls
     const style = document.createElement('style');
     style.textContent = `
+      .leaflet-container {
+        background-color: #f8fafc !important;
+      }
+      .dark .leaflet-container {
+        background-color: #111827 !important;
+      }
       .leaflet-popup-content-wrapper {
         background: white !important;
         border-radius: 12px !important;
@@ -157,7 +145,7 @@ const RegionMap = ({ regions, eventCounts = {} }: RegionMapProps) => {
         background-color: #374151 !important;
       }
       .dark .leaflet-control-attribution {
-        background-color: rgba(31, 41, 55, 0.8) !important;
+        background-color: rgba(17, 24, 39, 0.8) !important;
         color: #9ca3af !important;
       }
       .dark .leaflet-control-attribution a {
@@ -197,39 +185,23 @@ const RegionMap = ({ regions, eventCounts = {} }: RegionMapProps) => {
     };
   }, []);
 
-  // Swap tile layers when theme or language changes
+  // Swap tile layer when theme changes
   useEffect(() => {
     if (!map.current) return;
 
-    // Remove old layers
-    if (baseLayerRef.current) {
-      baseLayerRef.current.remove();
-      baseLayerRef.current = null;
-    }
-    if (labelsLayerRef.current) {
-      labelsLayerRef.current.remove();
-      labelsLayerRef.current = null;
+    if (tileLayerRef.current) {
+      tileLayerRef.current.remove();
+      tileLayerRef.current = null;
     }
 
     const isDark = resolvedTheme === "dark";
-    const tileOpts: L.TileLayerOptions = {
+    tileLayerRef.current = L.tileLayer(isDark ? TILES.dark : TILES.light, {
       maxZoom: 19,
+      attribution: TILE_ATTRIBUTION,
       noWrap: true,
       bounds: L.latLngBounds(L.latLng(-60, -180), L.latLng(75, 180)),
-    };
-
-    if (mapLanguage === "local") {
-      // Single combined layer with local-language labels (OSM)
-      const url = isDark ? TILES_LOCAL_LANG.dark : TILES_LOCAL_LANG.light;
-      const attribution = isDark ? CARTO_ATTRIBUTION : OSM_ATTRIBUTION;
-      baseLayerRef.current = L.tileLayer(url, { ...tileOpts, attribution }).addTo(map.current);
-    } else {
-      // Two-layer approach: base (no labels) + English labels overlay
-      const theme = isDark ? TILES.dark : TILES.light;
-      baseLayerRef.current = L.tileLayer(theme.base, { ...tileOpts, attribution: CARTO_ATTRIBUTION }).addTo(map.current);
-      labelsLayerRef.current = L.tileLayer(theme.labels, { ...tileOpts, attribution: '', pane: 'overlayPane' }).addTo(map.current);
-    }
-  }, [resolvedTheme, mapLanguage]);
+    }).addTo(map.current);
+  }, [resolvedTheme]);
 
   // Update markers when regions data changes
   useEffect(() => {
@@ -325,17 +297,6 @@ const RegionMap = ({ regions, eventCounts = {} }: RegionMapProps) => {
   return (
     <Card className="relative w-full h-[600px] overflow-hidden rounded-lg shadow-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900">
       <div ref={mapContainer} className="absolute inset-0" />
-      {/* Language toggle */}
-      <div className="absolute top-3 left-3 z-[1000]">
-        <button
-          onClick={() => setMapLanguage((l) => (l === "en" ? "local" : "en"))}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-          title={mapLanguage === "en" ? "Switch to local language labels" : "Switch to English labels"}
-        >
-          <Globe className="h-3.5 w-3.5" />
-          {mapLanguage === "en" ? "EN" : "Local"}
-        </button>
-      </div>
     </Card>
   );
 };

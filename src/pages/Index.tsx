@@ -386,7 +386,7 @@ const Index = () => {
           </div>
 
           {/* Status / error bar */}
-          <div className="mt-1 text-sm text-gray-500 dark:text-gray-400 space-y-1 text-center">
+          <div className="mt-1 text-sm text-gray-500 dark:text-gray-300 space-y-1 text-center">
             {fetchError && (
               <p className="text-xs text-amber-600 font-medium">
                 ⚠ Live feed unavailable — showing cached/default status.
@@ -394,7 +394,7 @@ const Index = () => {
               </p>
             )}
             <p>Status updates every 10 minutes under normal conditions</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500">
+            <p className="text-xs text-gray-400 dark:text-gray-400">
               * Refresh rate automatically increases to every 5 minutes when
               issues or outages are detected
             </p>
@@ -404,7 +404,7 @@ const Index = () => {
                   ● Database live
                 </span>
               )}
-              <p className="text-xs text-gray-400 dark:text-gray-500">
+              <p className="text-xs text-gray-400 dark:text-gray-400">
                 Last update: {formatLastUpdate(lastUpdateTime)}
               </p>
               <button
