@@ -196,6 +196,16 @@ const RegionMap = ({ regions, eventCounts = {}, className }: RegionMapProps) => 
     return () => resizeObserver.disconnect();
   }, []);
 
+  // Invalidate map size when className changes (normal ↔ NOC mode)
+  useEffect(() => {
+    if (!map.current) return;
+    // Delay to allow DOM to settle after layout change
+    const timer = setTimeout(() => {
+      map.current?.invalidateSize();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [className]);
+
   // Swap tile layer when theme changes
   useEffect(() => {
     if (!map.current) return;
@@ -306,8 +316,8 @@ const RegionMap = ({ regions, eventCounts = {}, className }: RegionMapProps) => 
   }, [regions, eventCounts]);
 
   return (
-    <Card className={`relative overflow-hidden ${className || "w-full h-[600px] rounded-lg shadow-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900"}`}>
-      <div ref={mapContainer} className="absolute inset-0" />
+    <Card className={className ? `relative ${className} overflow-hidden` : "relative w-full h-[600px] overflow-hidden rounded-lg shadow-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900"}>
+      <div ref={mapContainer} className="w-full h-full" />
     </Card>
   );
 };
