@@ -20,7 +20,7 @@ import {
   getGCPLastUpdateTime,
   getOCILastUpdateTime,
 } from "@/lib/cloud-health";
-import { upsertEvents, getRecentEvents, subscribeToEvents } from "@/lib/event-store";
+import { getRecentEvents, subscribeToEvents } from "@/lib/event-store";
 import { isSupabaseConfigured } from "@/lib/supabase-client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -163,62 +163,14 @@ const Index = () => {
     ) => {
       setFetchError(false);
       try {
-        let data: CloudHealthResult | null = null;
-
-        if (provider === "aws") {
-          const raw = await fetchAWSHealth();
-          if (raw) {
-            data = {
-              regions: raw.regions.map((r) => ({
-                code: r.code,
-                name: r.name,
-                status: r.status,
-                provider: "aws" as CloudProvider,
-                location: r.location,
-              })),
-              recentItems: raw.recentItems as RSSItem[],
-              lastBuildDate: raw.lastBuildDate,
-            };
-          }
-        } else if (provider === "azure") {
-          data = await fetchAzureHealth();
-        } else if (provider === "gcp") {
-          data = await fetchGCPHealth();
-        }
-        // OCI: no browser-side fetcher — data comes exclusively from Supabase via cron
-
         const currentIssues = overrideIssues ?? simulatedIssuesRef.current;
 
-        // Always try to get Supabase events — this works even when RSS fails
-        const supabaseItems = await getRecentEvents(provider, 7, 100);
+        // When Supabase is configured (live site), skip browser RSS fetch entirely.
+        // The cron job writes events to Supabase every 10 min — we just read from there.
+        // Browser-side RSS always fails on the live site due to CORS.
+        if (isSupabaseConfigured()) {
+          const supabaseItems = await getRecentEvents(provider, 7, 100);
 
-        if (data) {
-          // RSS fetch succeeded — persist new events to Supabase (fire-and-forget)
-          upsertEvents(data.recentItems as RSSItem[]).catch(() => {});
-
-          // Merge fresh RSS + Supabase historical events
-          const merged = mergeRSSItems(data.recentItems as RSSItem[], supabaseItems);
-
-          const updatedRegions = applySimulations(data.regions, currentIssues, provider);
-          setHealthData(updatedRegions);
-
-          // Update the allRegions pool with fresh status for this provider
-          setAllRegions((prev) => {
-            const others = prev.filter((r) => r.provider !== provider);
-            return [...others, ...updatedRegions];
-          });
-
-          setRecentItems([...simulatedItems, ...merged]);
-          setLastBuildDate(data.lastBuildDate);
-          setLastUpdateTime(getLastUpdateTime(provider));
-          setRefreshInterval(
-            checkForErrors(updatedRegions) ? ERROR_REFRESH_RATE : NORMAL_REFRESH_RATE
-          );
-        } else {
-          // RSS fetch failed (CORS) — fall back to Supabase data only
-          setFetchError(true);
-
-          // Apply region status from Supabase events
           const defaultRegions = getDefaultRegions(provider);
           const regionStatusFromEvents = deriveRegionStatus(supabaseItems, defaultRegions);
           const updatedRegions = applySimulations(regionStatusFromEvents, currentIssues, provider);
@@ -229,12 +181,57 @@ const Index = () => {
             return [...others, ...updatedRegions];
           });
 
-          // Still show Supabase events in the status log
-          if (supabaseItems.length > 0) {
-            setRecentItems([...simulatedItems, ...supabaseItems]);
-            setLastUpdateTime(new Date().toISOString());
+          setRecentItems([...simulatedItems, ...supabaseItems]);
+          setLastUpdateTime(new Date().toISOString());
+          setRefreshInterval(
+            checkForErrors(updatedRegions) ? ERROR_REFRESH_RATE : NORMAL_REFRESH_RATE
+          );
+        } else {
+          // Local dev without Supabase — try browser RSS fetch (may fail due to CORS)
+          let data: CloudHealthResult | null = null;
+
+          if (provider === "aws") {
+            const raw = await fetchAWSHealth();
+            if (raw) {
+              data = {
+                regions: raw.regions.map((r) => ({
+                  code: r.code,
+                  name: r.name,
+                  status: r.status,
+                  provider: "aws" as CloudProvider,
+                  location: r.location,
+                })),
+                recentItems: raw.recentItems as RSSItem[],
+                lastBuildDate: raw.lastBuildDate,
+              };
+            }
+          } else if (provider === "azure") {
+            data = await fetchAzureHealth();
+          } else if (provider === "gcp") {
+            data = await fetchGCPHealth();
+          }
+
+          if (data) {
+            const updatedRegions = applySimulations(data.regions, currentIssues, provider);
+            setHealthData(updatedRegions);
+            setAllRegions((prev) => {
+              const others = prev.filter((r) => r.provider !== provider);
+              return [...others, ...updatedRegions];
+            });
+            setRecentItems([...simulatedItems, ...data.recentItems as RSSItem[]]);
+            setLastBuildDate(data.lastBuildDate);
+            setLastUpdateTime(getLastUpdateTime(provider));
+            setRefreshInterval(
+              checkForErrors(updatedRegions) ? ERROR_REFRESH_RATE : NORMAL_REFRESH_RATE
+            );
+          } else {
+            setFetchError(true);
+            setHealthData((prev) =>
+              applySimulations(prev, currentIssues, provider)
+            );
           }
         }
+
       } catch (error) {
         console.error("Failed to fetch health data:", error);
         setFetchError(true);
@@ -433,15 +430,6 @@ const Index = () => {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function mergeRSSItems(a: RSSItem[], b: RSSItem[]): RSSItem[] {
-  const map = new Map<string, RSSItem>();
-  b.forEach((item) => map.set(item.guid, item));
-  a.forEach((item) => map.set(item.guid, item));
-  return Array.from(map.values()).sort(
-    (x, y) => new Date(y.pubDate).getTime() - new Date(x.pubDate).getTime()
-  );
-}
 
 /**
  * Derive region statuses from Supabase events when RSS feed is unavailable.
