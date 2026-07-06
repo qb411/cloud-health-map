@@ -14,25 +14,25 @@ const RegionSummary = ({ regions }: RegionSummaryProps) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <Card className="p-4 flex items-center space-x-4">
+      <Card className="p-4 flex items-center space-x-4 dark:bg-gray-800 dark:border-gray-700">
         <CheckCircle className="w-8 h-8 text-emerald-500" />
         <div>
-          <p className="text-sm text-gray-500">Operational</p>
-          <p className="text-2xl font-semibold">{operational}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Operational</p>
+          <p className="text-2xl font-semibold dark:text-gray-100">{operational}</p>
         </div>
       </Card>
-      <Card className="p-4 flex items-center space-x-4">
+      <Card className="p-4 flex items-center space-x-4 dark:bg-gray-800 dark:border-gray-700">
         <AlertTriangle className="w-8 h-8 text-amber-500" />
         <div>
-          <p className="text-sm text-gray-500">Issues</p>
-          <p className="text-2xl font-semibold">{issues}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Issues</p>
+          <p className="text-2xl font-semibold dark:text-gray-100">{issues}</p>
         </div>
       </Card>
-      <Card className="p-4 flex items-center space-x-4">
+      <Card className="p-4 flex items-center space-x-4 dark:bg-gray-800 dark:border-gray-700">
         <XCircle className="w-8 h-8 text-red-500" />
         <div>
-          <p className="text-sm text-gray-500">Outages</p>
-          <p className="text-2xl font-semibold">{outages}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Outages</p>
+          <p className="text-2xl font-semibold dark:text-gray-100">{outages}</p>
         </div>
       </Card>
     </div>
