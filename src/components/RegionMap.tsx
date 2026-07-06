@@ -1,9 +1,16 @@
-
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import { useTheme } from "next-themes";
 import type { RegionStatus } from "@/lib/cloud-health";
 import { Card } from "@/components/ui/card";
+
+const LIGHT_TILES = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+const DARK_TILES = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+const TILE_ATTRIBUTION = '&copy; OpenStreetMap contributors &copy; CARTO';
 
 // Helper function to get country flag image
 const getCountryFlag = (regionName: string): string => {
@@ -63,28 +70,17 @@ const getStatusColor = (status: "operational" | "issue" | "outage") => {
   }
 };
 
-// Helper function to get status text color
-const getStatusTextColor = (status: "operational" | "issue" | "outage") => {
-  switch (status) {
-    case "operational":
-      return "text-emerald-600";
-    case "issue":
-      return "text-amber-600";
-    case "outage":
-      return "text-red-600";
-    default:
-      return "text-emerald-600";
-  }
-};
-
 interface RegionMapProps {
   regions: RegionStatus[];
+  eventCounts?: Record<string, number>; // regionCode -> count of active incidents
 }
 
-const RegionMap = ({ regions }: RegionMapProps) => {
+const RegionMap = ({ regions, eventCounts = {} }: RegionMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
-  const markersRef = useRef<L.CircleMarker[]>([]);
+  const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -99,17 +95,6 @@ const RegionMap = ({ regions }: RegionMapProps) => {
       ),
       maxBoundsViscosity: 1.0,
     }).setView([20, 0], 2);
-
-    // Add OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap contributors',
-      noWrap: true,
-      bounds: L.latLngBounds(
-        L.latLng(-60, -180),
-        L.latLng(75, 180)
-      )
-    }).addTo(map.current);
 
     // Add CSS to style the popup globally
     const style = document.createElement('style');
@@ -129,6 +114,14 @@ const RegionMap = ({ regions }: RegionMapProps) => {
         margin: 0 !important;
         padding: 0 !important;
       }
+      .dark .leaflet-popup-content-wrapper {
+        background: #1f2937 !important;
+        border-color: #374151 !important;
+      }
+      .dark .leaflet-popup-tip {
+        background: #1f2937 !important;
+        border-color: #374151 !important;
+      }
       .aws-popup-header {
         background: linear-gradient(135deg, #ff9900 0%, #ff7700 100%);
         color: white;
@@ -146,6 +139,10 @@ const RegionMap = ({ regions }: RegionMapProps) => {
         padding: 8px 12px;
         text-align: center;
       }
+      .custom-cluster-icon, .custom-region-icon {
+        background: transparent !important;
+        border: none !important;
+      }
     `;
     document.head.appendChild(style);
 
@@ -155,25 +152,82 @@ const RegionMap = ({ regions }: RegionMapProps) => {
     };
   }, []);
 
+  // Swap tile layer when theme changes
+  useEffect(() => {
+    if (!map.current) return;
+
+    // Remove old tile layer
+    if (tileLayerRef.current) {
+      tileLayerRef.current.remove();
+    }
+
+    const tileUrl = resolvedTheme === "dark" ? DARK_TILES : LIGHT_TILES;
+    tileLayerRef.current = L.tileLayer(tileUrl, {
+      maxZoom: 19,
+      attribution: TILE_ATTRIBUTION,
+      noWrap: true,
+      bounds: L.latLngBounds(
+        L.latLng(-60, -180),
+        L.latLng(75, 180)
+      )
+    }).addTo(map.current);
+  }, [resolvedTheme]);
+
   // Update markers when regions data changes
   useEffect(() => {
     if (!map.current) return;
 
-    // Remove existing markers
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current = [];
+    // Remove existing cluster group
+    if (clusterGroupRef.current) {
+      map.current.removeLayer(clusterGroupRef.current);
+      clusterGroupRef.current = null;
+    }
 
-    // Add new markers for each AWS region
+    // Create a new MarkerClusterGroup with custom icon
+    const clusterGroup = L.markerClusterGroup({
+      maxClusterRadius: 50,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+      zoomToBoundsOnClick: true,
+      iconCreateFunction: (cluster) => {
+        const childMarkers = cluster.getAllChildMarkers();
+        // Determine worst status from child markers
+        let worstStatus: 'operational' | 'issue' | 'outage' = 'operational';
+        for (const child of childMarkers) {
+          const status = (child as any).options.regionStatus;
+          if (status === 'outage') { worstStatus = 'outage'; break; }
+          if (status === 'issue') worstStatus = 'issue';
+        }
+        const colors = getStatusColor(worstStatus);
+        const count = cluster.getChildCount();
+        return L.divIcon({
+          html: `<div style="background:${colors.fill};border:2px solid ${colors.border};border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,0.3);">${count}</div>`,
+          className: 'custom-cluster-icon',
+          iconSize: L.point(36, 36),
+          iconAnchor: L.point(18, 18),
+        });
+      },
+    });
+
+    // Add new markers for each region
     regions.forEach((region) => {
+      const count = eventCounts[region.code] || 0;
       const colors = getStatusColor(region.status);
-      const marker = L.circleMarker([region.location[1], region.location[0]], {
-        radius: 8,
-        fillColor: colors.fill,
-        color: colors.border,
-        weight: 1,
-        opacity: 1,
-        fillOpacity: 0.8
-      }).addTo(map.current!);
+      const badgeHtml = count > 0
+        ? `<span style="position:absolute;top:-4px;right:-4px;background:${region.status === 'outage' ? '#EF4444' : '#F59E0B'};color:white;border-radius:50%;width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:bold;border:1px solid white;">${count}</span>`
+        : '';
+
+      const icon = L.divIcon({
+        html: `<div style="position:relative;width:16px;height:16px;"><div style="background:${colors.fill};border:2px solid ${colors.border};border-radius:50%;width:16px;height:16px;opacity:0.85;"></div>${badgeHtml}</div>`,
+        className: 'custom-region-icon',
+        iconSize: L.point(16, 16),
+        iconAnchor: L.point(8, 8),
+      });
+
+      const marker = L.marker([region.location[1], region.location[0]], {
+        icon,
+        regionStatus: region.status, // custom option for cluster color calculation
+      } as any);
 
       // Add popup with region info
       const providerName = region.provider?.toUpperCase() || 'AWS';
@@ -191,8 +245,8 @@ const RegionMap = ({ regions }: RegionMapProps) => {
           <span>${providerName} Region</span>
         </div>
         <div class="aws-popup-body">
-          <h3 class="font-semibold text-gray-900 leading-tight" style="margin: 0;">${getCountryFlag(region.name)}${region.name}</h3>
-          <p class="text-xs text-gray-500" style="margin: 2px 0 0 0;">${region.code}</p>
+          <h3 class="font-semibold leading-tight" style="margin: 0; color: var(--foreground-color, #111827);">${getCountryFlag(region.name)}${region.name}</h3>
+          <p class="text-xs" style="margin: 2px 0 0 0; color: var(--foreground-color, #111827); opacity: 0.6;">${region.code}</p>
           <span class="px-2 py-1 rounded text-xs font-medium ${region.status === 'operational' ? 'bg-emerald-100 text-emerald-800' : region.status === 'issue' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}" style="display: block; width: fit-content; margin: 4px auto 0 auto;">
             ${region.status.charAt(0).toUpperCase() + region.status.slice(1)}
           </span>
@@ -203,27 +257,15 @@ const RegionMap = ({ regions }: RegionMapProps) => {
         keepInView: true
       });
 
-      // Add hover effect
-      marker.on('mouseover', function() {
-        this.setStyle({
-          fillOpacity: 1,
-          radius: 10
-        });
-      });
-
-      marker.on('mouseout', function() {
-        this.setStyle({
-          fillOpacity: 0.8,
-          radius: 8
-        });
-      });
-
-      markersRef.current.push(marker);
+      clusterGroup.addLayer(marker);
     });
-  }, [regions]);
+
+    map.current!.addLayer(clusterGroup);
+    clusterGroupRef.current = clusterGroup;
+  }, [regions, eventCounts]);
 
   return (
-    <Card className="relative w-full h-[600px] overflow-hidden rounded-lg shadow-lg">
+    <Card className="relative w-full h-[600px] overflow-hidden rounded-lg shadow-lg dark:bg-gray-800">
       <div ref={mapContainer} className="absolute inset-0" />
     </Card>
   );

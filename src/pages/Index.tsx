@@ -3,6 +3,7 @@ import RegionMap from "@/components/RegionMap";
 import RegionSummary from "@/components/RegionSummary";
 import StatusLog from "@/components/StatusLog";
 import TestControls from "@/components/TestControls";
+import ThemeToggle from "@/components/ThemeToggle";
 import { fetchAWSHealth, getLastUpdateTime as getAWSLastUpdateTime } from "@/lib/aws-health";
 import { awsRegions } from "@/lib/aws-regions";
 import {
@@ -334,11 +335,22 @@ const Index = () => {
 
   const meta = PROVIDER_META[selectedProvider];
 
+  // Derive event counts per region from recent items
+  const eventCounts = recentItems.reduce<Record<string, number>>((acc, item) => {
+    for (const region of healthData) {
+      const text = `${item.title} ${item.description} ${item.guid}`.toLowerCase();
+      if (text.includes(region.code.toLowerCase())) {
+        acc[region.code] = (acc[region.code] || 0) + 1;
+      }
+    }
+    return acc;
+  }, {});
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1" />
             <div className="text-center flex-1">
@@ -351,19 +363,20 @@ const Index = () => {
                     className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                       selectedProvider === p
                         ? PROVIDER_META[p].activeClass
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                        : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
                     }`}
                   >
                     {PROVIDER_META[p].label}
                   </button>
                 ))}
               </div>
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl">
                 {meta.title}
               </h1>
-              <p className="mt-2 text-lg text-gray-600">{meta.description}</p>
+              <p className="mt-2 text-lg text-gray-600 dark:text-gray-300">{meta.description}</p>
             </div>
             <div className="flex-1 flex justify-end">
+              <ThemeToggle />
               <TestControls
                 allRegions={allRegions}
                 selectedProvider={selectedProvider}
@@ -373,7 +386,7 @@ const Index = () => {
           </div>
 
           {/* Status / error bar */}
-          <div className="mt-1 text-sm text-gray-500 space-y-1 text-center">
+          <div className="mt-1 text-sm text-gray-500 dark:text-gray-400 space-y-1 text-center">
             {fetchError && (
               <p className="text-xs text-amber-600 font-medium">
                 ⚠ Live feed unavailable — showing cached/default status.
@@ -381,7 +394,7 @@ const Index = () => {
               </p>
             )}
             <p>Status updates every 10 minutes under normal conditions</p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-gray-400 dark:text-gray-500">
               * Refresh rate automatically increases to every 5 minutes when
               issues or outages are detected
             </p>
@@ -391,7 +404,7 @@ const Index = () => {
                   ● Supabase active
                 </span>
               )}
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-400 dark:text-gray-500">
                 Last update: {formatLastUpdate(lastUpdateTime)}
               </p>
               <button
@@ -409,7 +422,7 @@ const Index = () => {
 
         <div className="h-4" />
 
-        <RegionMap regions={healthData} />
+        <RegionMap regions={healthData} eventCounts={eventCounts} />
 
         <div className="h-8" />
 
