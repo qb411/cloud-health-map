@@ -9,7 +9,7 @@
     "test": "node test-feeds.js"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.48.1",
+    "@supabase/supabase-js": "^2.110.7",
     "xml2js": "^0.6.2",
     "node-fetch": "^3.3.2",
     "dotenv": "^16.4.5"
